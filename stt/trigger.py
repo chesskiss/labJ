@@ -22,9 +22,9 @@ class TriggerEvaluator:
 
         if any(kw in lowered for kw in self.stop_listening_keywords):
             return "stop_listening"
-        elif any(kw in lowered for kw in self.stop_transcription_keywords):
-            return "pause_transcription"
         elif any(kw in lowered for kw in self.start_transcription_keywords):
             return "resume_transcription"
+        elif any(kw in lowered for kw in self.stop_transcription_keywords):
+            return "pause_transcription"
         else:
             return None

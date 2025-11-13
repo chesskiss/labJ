@@ -1,0 +1,13 @@
+add YAML (.env)
+| Purpose             | Tool                   |
+| ------------------- | ---------------------- |
+| Environment & paths | `env_config.py`        |
+| User settings       | `config.yaml`          |
+| Secrets             | `.env` + `os.getenv()` |
+| CLI flags           | `argparse` or `typer`  |
+
+then env_config.py and stt/config.py might need altering.
+
+
+
+------------------------------------------------
