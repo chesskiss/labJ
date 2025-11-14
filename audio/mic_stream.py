@@ -4,6 +4,7 @@ Microphone stream handler for real-time audio capture.
 This module provides functionality to capture audio from the microphone
 in real-time using sounddevice, with support for streaming and buffering.
 """
+from env_config import CHUNK_SIZE, STT_SAMPLE_RATE
 
 import asyncio
 import logging
@@ -25,9 +26,9 @@ class MicrophoneStream:
     
     def __init__(
         self,
-        sample_rate: int = 16000,
+        sample_rate: int = STT_SAMPLE_RATE,
         channels: int = 1,
-        chunk_size: int = 4096,
+        chunk_size: int = CHUNK_SIZE,
         device: Optional[int] = None,
         dtype: str = "float32",
         callback: Optional[Callable] = None
