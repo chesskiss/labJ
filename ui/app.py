@@ -1,151 +1,147 @@
-# storage/read_repository.py
+# ui/app.py
+
 import sys
 from pathlib import Path
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.append(str(ROOT))
-
-from env_config import DB_PATH
-
-import sqlite3
-from dataclasses import dataclass
 from datetime import datetime
-from typing import List, Optional
+from zoneinfo import ZoneInfo
+
+import streamlit as st
+
+# Ensure project root is importable (works even when Streamlit runs from ui/)
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.append(str(ROOT))
+
+from storage.read_repository import JournalReadRepository  # type: ignore
 
 
-
-@dataclass
-class SessionSummary:
-    id: int
-    started_at: str
-    ended_at: Optional[str]
-    title: Optional[str]
+# You can later make this dynamic based on user preference
+LOCAL_TZ = ZoneInfo("America/New_York")
 
 
-@dataclass
-class UtteranceView:
-    id: int
-    session_id: int
-    start_time: str
-    end_time: str
-    sequence_index: int
-    text: str
-    source: str
+# ---------- Helpers ----------
+
+def parse_iso(dt_str: str) -> datetime | None:
+    if not dt_str:
+        return None
+    try:
+        # DB stores strings like "2025-11-15T06:59:50.811997Z"
+        if dt_str.endswith("Z"):
+            dt_str = dt_str[:-1] + "+00:00"
+        return datetime.fromisoformat(dt_str)
+    except Exception:
+        return None
 
 
-@dataclass
-class ActionView:
-    id: int
-    session_id: int
-    time: str
-    action_type: str
-    raw_text: Optional[str]
+def format_dt_local(dt_str: str) -> str:
+    dt = parse_iso(dt_str)
+    if not dt:
+        return ""
+    return dt.astimezone(LOCAL_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
 
-class JournalReadRepository:
-    """Read-only access to journal data for GUI / analytics."""
+# ---------- Streamlit App ----------
 
-    def __init__(self, db_path: Optional[str] = None):
-        self.db_path = str(db_path or DB_PATH)
-        self.conn = sqlite3.connect(self.db_path, check_same_thread=False)
-        self.conn.row_factory = sqlite3.Row
+def main():
+    st.set_page_config(page_title="Lab Voice Journal", layout="wide")
+    st.title("🧪 Lab Voice Journal")
 
-    # --- Sessions ---
-
-    def list_sessions(self) -> List[SessionSummary]:
-        cur = self.conn.cursor()
-        cur.execute(
-            """
-            SELECT id, started_at, ended_at, title
-            FROM sessions
-            ORDER BY started_at DESC
-            """
-        )
-        rows = cur.fetchall()
-        return [
-            SessionSummary(
-                id=row["id"],
-                started_at=row["started_at"],
-                ended_at=row["ended_at"],
-                title=row["title"],
-            )
-            for row in rows
-        ]
-
-    def get_session(self, session_id: int) -> Optional[SessionSummary]:
-        cur = self.conn.cursor()
-        cur.execute(
-            """
-            SELECT id, started_at, ended_at, title
-            FROM sessions
-            WHERE id = ?
+    # --- Auto-refresh controls ---
+    st.sidebar.header("Live view")
+    refresh_interval = st.sidebar.slider(
+        "Auto-refresh every (seconds)", min_value=0, max_value=10, value=3
+    )
+    if refresh_interval > 0:
+        # Simple HTML meta refresh – reloads the page every N seconds
+        st.markdown(
+            f"""
+            <meta http-equiv="refresh" content="{refresh_interval}">
             """,
-            (session_id,),
-        )
-        row = cur.fetchone()
-        if row is None:
-            return None
-        return SessionSummary(
-            id=row["id"],
-            started_at=row["started_at"],
-            ended_at=row["ended_at"],
-            title=row["title"],
+            unsafe_allow_html=True,
         )
 
-    # --- Utterances ---
+    # --- Sessions sidebar ---
+    st.sidebar.header("Sessions")
 
-    def get_utterances(self, session_id: int) -> List[UtteranceView]:
-        cur = self.conn.cursor()
-        cur.execute(
-            """
-            SELECT id, session_id, start_time, end_time,
-                   sequence_index, text, source
-            FROM utterances
-            WHERE session_id = ?
-            ORDER BY sequence_index
-            """,
-            (session_id,),
-        )
-        rows = cur.fetchall()
-        return [
-            UtteranceView(
-                id=row["id"],
-                session_id=row["session_id"],
-                start_time=row["start_time"],
-                end_time=row["end_time"],
-                sequence_index=row["sequence_index"],
-                text=row["text"],
-                source=row["source"],
-            )
-            for row in rows
-        ]
+    repo = JournalReadRepository()
+    sessions = repo.list_sessions()
+    if not sessions:
+        st.sidebar.info("No sessions found yet.")
+        st.write("Start the voice agent and record a session to see it here.")
+        return
 
-    # --- Actions ---
+    session_labels = [
+        f"#{s.id} – {format_dt_local(s.started_at)}"
+        + (f" – {s.title}" if s.title else "")
+        for s in sessions
+    ]
+    session_id_by_label = {label: s.id for label, s in zip(session_labels, sessions)}
 
-    def get_actions(self, session_id: int) -> List[ActionView]:
-        cur = self.conn.cursor()
-        cur.execute(
-            """
-            SELECT id, session_id, time, action_type, raw_text
-            FROM actions
-            WHERE session_id = ?
-            ORDER BY time
-            """,
-            (session_id,),
-        )
-        rows = cur.fetchall()
-        return [
-            ActionView(
-                id=row["id"],
-                session_id=row["session_id"],
-                time=row["time"],
-                action_type=row["action_type"],
-                raw_text=row["raw_text"],
-            )
-            for row in rows
-        ]
+    selected_label = st.sidebar.selectbox("Select session", session_labels)
+    selected_session_id = session_id_by_label[selected_label]
+    session = repo.get_session(selected_session_id)
 
-    def close(self) -> None:
-        try:
-            self.conn.close()
-        except Exception:
-            pass
+    st.sidebar.markdown("---")
+    st.sidebar.write(f"**Session ID:** {session.id}")
+    st.sidebar.write(f"**Started:** {format_dt_local(session.started_at)}")
+    if session.ended_at:
+        st.sidebar.write(f"**Ended:** {format_dt_local(session.ended_at)}")
+    else:
+        st.sidebar.write("**Ended:** (ongoing)")
+
+    # --- Main layout ---
+    col_transcript, col_actions = st.columns([3, 1])
+
+    # Transcript column
+    with col_transcript:
+        st.subheader("Transcript")
+
+        utterances = repo.get_utterances(session.id)
+        if not utterances:
+            st.info("No utterances recorded for this session yet.")
+        else:
+            last_minute_bucket = None
+            for utt in utterances:
+                start_local_dt = parse_iso(utt.start_time)
+                if start_local_dt:
+                    local_time_str = start_local_dt.astimezone(LOCAL_TZ).strftime(
+                        "%H:%M:%S"
+                    )
+                    minute_bucket = start_local_dt.replace(
+                        second=0, microsecond=0
+                    ).strftime("%H:%M")
+                else:
+                    local_time_str = ""
+                    minute_bucket = None
+
+                # Optional: group by minute (visual section headers)
+                if minute_bucket and minute_bucket != last_minute_bucket:
+                    st.markdown(f"#### 🕒 {minute_bucket}")
+                    last_minute_bucket = minute_bucket
+
+                st.markdown(
+                    f"**[{local_time_str}]**  \n"
+                    f"{utt.text}"
+                )
+                st.markdown("---")
+
+    # Actions column
+    with col_actions:
+        st.subheader("Actions")
+
+        actions = repo.get_actions(session.id)
+        if not actions:
+            st.write("No actions recorded.")
+        else:
+            for act in actions:
+                time_str = format_dt_local(act.time)
+                st.markdown(
+                    f"**{time_str}**  \n"
+                    f"`{act.action_type}`  \n"
+                    f"{act.raw_text or ''}"
+                )
+                st.markdown("---")
+
+
+if __name__ == "__main__":
+    main()
