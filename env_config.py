@@ -14,12 +14,19 @@ ROOT = Path(__file__).resolve().parent
 # stt and audio config
 STT_SAMPLE_RATE = 16000
 STT_MODEL_SIZE = "tiny"
-STT_DURATION = 50 # seconds - Sleep time for the transcriber
+STT_DURATION = 50 # seconds - Sleep time for the transcriber. Only for the blocking test in __main__
 CHUNK_SIZE = 4096
 
+# streaming STT tuning
+STT_WINDOW_SEC = 3.0      # how much audio per Whisper call
+STT_OVERLAP_SEC = 0.7     # how much context to keep between calls
 
 
+# Data
+DATA_DIR = ROOT / "data"
+DATA_DIR.mkdir(exist_ok=True)
 
+DB_PATH = DATA_DIR / "journal.sqlite"
 
 # # Workspace for storing audio, transcriptions, logs, etc.
 # WORKDIR = ROOT / "workspace"

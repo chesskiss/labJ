@@ -7,9 +7,26 @@ class TriggerEvaluator:
     """
 
     def __init__(self):
-        self.stop_transcription_keywords = {"stop writing", "pause", "mute"}
-        self.start_transcription_keywords = {"start writing", "resume", "unmute"}
-        self.stop_listening_keywords = {"stop listening", "terminate", "shutdown"}
+        self.stop_transcription_keywords = {
+            "stop writing",
+            "pause",
+            "mute",
+            "stop transcribing",
+            "stop transcription",
+        }
+        self.start_transcription_keywords = {
+            "start writing",
+            "resume",
+            "unmute",
+            "start transcribing",
+            "resume transcribing",
+        }
+        self.stop_listening_keywords = {
+            "stop listening",
+            "terminate",
+            "shutdown",
+        }
+
 
     def evaluate(self, text):
         """

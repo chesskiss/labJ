@@ -39,3 +39,30 @@ lab-assistant-ai/
     ├── test_stt.py
     ├── test_parser.py
     └── ...
+
+High-level architecture / hierarchy scheme
++--------------------+
+|  MicrophoneStream  |  (audio/mic_stream.py)
++---------+----------+
+          |
+          v
++--------------------+          +-------------------------+
+|    Controller      |          |   TranscriptRepository  |
+| (agents/controller)|--------->| (storage/sqlite_...py)  |
++----+-------+-------+          +-------------------------+
+     |       |
+     |       | text, action
+     |       v
+     |  +-----------------+
+     |  |   Transcriber   |  (stt/transcriber.py)
+     |  +--------+--------+
+     |           |
+     |           | text
+     |           v
+     |  +-----------------+
+     |  | TriggerEvaluator|  (stt/trigger.py)
+     |  +-----------------+
+     |
+     |  (state: is_transcribing, session_id)
+     |
+GUI <--------------------------------------------------> DB (journal.sqlite)
