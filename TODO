@@ -1,3 +1,18 @@
+# GUI
+🔥 Add auto-refresh so the GUI updates without clicking
+🔥 Add search / filter bar
+🔥 Add "timeline mode" grouping by minute
+🔥 Add dark-mode styling
+🔥 Add session metadata display
+🔥 Add ability to rename sessions
+🔥 Add expandable paragraph mode
+🔥 Add export-to-PDF for the transcript
+🔥 Add audio waveform or playback mode
+🔥 Or rewrite the GUI in React + FastAPI for a full desktop-grade UX
+
+
+
+# Optional tasks:
 add YAML (.env)
 | Purpose             | Tool                   |
 | ------------------- | ---------------------- |
