@@ -1,7 +1,7 @@
 # storage/__init__.py
 
 from typing import Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class TranscriptRepository:

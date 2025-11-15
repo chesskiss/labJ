@@ -2,7 +2,7 @@
 
 import json
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 
 from env_config import DB_PATH
@@ -116,7 +116,7 @@ class SQLiteTranscriptRepository(TranscriptRepository):
         title: Optional[str] = None,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> int:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         cur = self.conn.cursor()
         cur.execute(
             """
@@ -136,7 +136,7 @@ class SQLiteTranscriptRepository(TranscriptRepository):
 
     def end_session(self, session_id: int,
                     ended_at: Optional[datetime] = None) -> None:
-        ended = ended_at or datetime.utcnow()
+        ended = ended_at or datetime.now(timezone.utc)
         cur = self.conn.cursor()
         cur.execute(
             """
@@ -172,7 +172,7 @@ class SQLiteTranscriptRepository(TranscriptRepository):
         cur = self.conn.cursor()
         iso_start = _to_iso(start_time)
         iso_end = _to_iso(end_time)
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         cur.execute(
             """
@@ -204,7 +204,7 @@ class SQLiteTranscriptRepository(TranscriptRepository):
     ) -> int:
         cur = self.conn.cursor()
         iso_time = _to_iso(time)
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         cur.execute(
             """
