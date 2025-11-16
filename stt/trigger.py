@@ -45,3 +45,14 @@ class TriggerEvaluator:
             return "pause_transcription"
         else:
             return None
+
+    
+    def contains_any_keyword(self, text: str) -> bool:
+        """Return True if text contains any known trigger keyword."""
+        lowered = text.lower()
+        all_keywords = (
+            self.stop_transcription_keywords
+            | self.start_transcription_keywords
+            | self.stop_listening_keywords
+        )
+        return any(kw in lowered for kw in all_keywords)

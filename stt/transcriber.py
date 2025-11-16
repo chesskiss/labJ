@@ -18,6 +18,8 @@ from env_config import (
     STT_MODEL_SIZE,
     STT_WINDOW_SEC,
     STT_OVERLAP_SEC,
+    STT_MIN_WINDOW_RMS,
+    STT_MIN_TEXT_CHARS,
 )
 from stt.trigger import TriggerEvaluator
 
@@ -42,6 +44,10 @@ class Transcriber:
 
         self._window_samples: int = int(self._window_sec * self.sample_rate)
         self._overlap_samples: int = int(self._overlap_sec * self.sample_rate)
+
+        self._min_window_rms: float = float(STT_MIN_WINDOW_RMS)
+        self._min_text_chars: int = int(STT_MIN_TEXT_CHARS)
+
 
         print(
             f"[Transcriber] Init: model={self.model_size}, compute_type={compute_type}, "
@@ -92,6 +98,16 @@ class Transcriber:
         # Use the last `window` samples as the current context window
         window = self._buffer[-self._window_samples :]
 
+        window_rms = float(np.sqrt(np.mean(window ** 2))) if window.size > 0 else 0.0
+        
+        if window_rms < self._min_window_rms:
+            # Too quiet, treat as silence / background noise
+            # Do NOT reset buffer; keep accumulating
+            # so we can still capture real speech when it comes.
+            # Optional: print debug
+            # print(f"[Transcriber] Skipping window, low RMS: {window_rms:.6f}")
+            return "", None
+
         try:
             segments, _ = self.model.transcribe(window, language="en")
             texts = [seg.text.strip() for seg in segments if seg.text.strip()]
@@ -102,6 +118,14 @@ class Transcriber:
             if not result:
                 # Do not reset buffer; let it accumulate more audio
                 return "", None
+            
+            if len(result) < self._min_text_chars and not self.trigger.contains_any_keyword(result):
+                # This is likely random "you / uh / hm" from noise.
+                # Let it pass through only if it's actually a command phrase.
+                # Optional debug:
+                # print(f"[Transcriber] Ignoring short non-command text: {result!r}")
+                return "", None
+
 
             # Trigger / command-control evaluation
             action = self.trigger.evaluate(result)

@@ -21,6 +21,9 @@ CHUNK_SIZE = 4096
 STT_WINDOW_SEC = 3.0      # how much audio per Whisper call
 STT_OVERLAP_SEC = 0.7     # how much context to keep between calls
 
+# noise / text filters
+STT_MIN_WINDOW_RMS = 0.005      # tune this; start small
+STT_MIN_TEXT_CHARS = 5          # min length to accept as "real" text unless it's a command
 
 # Data
 DATA_DIR = ROOT / "data"
