@@ -111,7 +111,7 @@ class Transcriber:
         try:
             segments, _ = self.model.transcribe(
                 window, 
-                language="en", # avoid language detection
+                language="en",  # avoid language detection
                 beam_size=1,           # 1 = fastest, higher = better but slower
                 best_of=1,
                 vad_filter=True,       # skip silence

@@ -19,6 +19,9 @@ ui/node_modules/
 ui/dist/
 ui/.vite/
 
+# Misc
+data/
+
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .cursor/rules/snyk_rules.mdc
