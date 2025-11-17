@@ -30,8 +30,8 @@ class Transcriber:
     Public API:
         transcribe(audio_chunk: np.ndarray, sample_rate: int) -> tuple[str, Optional[str]]
     """
-
-    def __init__(self, model_size: Optional[str] = None, compute_type: str = "int8"):
+    #TODO check if GPU available on windows, android, macos, ios, and choose int8_float16, float16, etc. 
+    def __init__(self, model_size: Optional[str] = "large-v3", compute_type: str = "int8"):
         self.sample_rate: int = STT_SAMPLE_RATE
         self.model_size: str = model_size or STT_MODEL_SIZE
 
@@ -109,7 +109,14 @@ class Transcriber:
             return "", None
 
         try:
-            segments, _ = self.model.transcribe(window, language="en")
+            segments, _ = self.model.transcribe(
+                window, 
+                language="en", # avoid language detection
+                beam_size=1,           # 1 = fastest, higher = better but slower
+                best_of=1,
+                vad_filter=True,       # skip silence
+                word_timestamps=False, # cheaper
+            )
             texts = [seg.text.strip() for seg in segments if seg.text.strip()]
             result = " ".join(texts).strip()
 
@@ -161,6 +168,7 @@ if __name__ == "__main__":
         audio = sd.rec(
             int(duration * sample_rate),
             samplerate=sample_rate,
+            
             channels=1,
             dtype="float32",
         )

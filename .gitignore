@@ -14,5 +14,12 @@ venv/
 # System files
 .DS_Store
 
+# UI packages
+ui/node_modules/
+ui/dist/
+ui/.vite/
+
+
 # Snyk Security Extension - AI Rules (auto-generated)
 .cursor/rules/snyk_rules.mdc
+

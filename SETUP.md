@@ -51,6 +51,7 @@ lab-assistant-ai/
 1. **Install dependencies:**
    ```bash
    pip install -r requirements.txt
+   cd ui && npm install #brew install node on MacOS if npm not found
    ```
 
 2. **Set up environment variables:**
@@ -65,8 +66,9 @@ lab-assistant-ai/
 
 4. **Run the application:**
    ```bash
-   python main.py
-   ```
+   uvicorn agents.controller:app --reload #backend
+   cd ui && npm run dev # frontend
+   ``` 
 
 ## Current Status
 
