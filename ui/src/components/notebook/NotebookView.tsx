@@ -15,23 +15,44 @@ interface Session {
   blocks: NotebookBlock[];
 }
 
-export const NotebookView: React.FC = () => {
+interface Props {
+  searchTerm: string;
+  reverseSessions: boolean;
+}
+
+export const NotebookView: React.FC<Props> = ({ searchTerm, reverseSessions }) => {
   const [sessions, setSessions] = useState<Session[]>([]);
 
   useEffect(() => {
-    fetchNotebook().then(setSessions);
+    let mounted = true;
+
+    const refresh = () => {
+      fetchNotebook()
+        .then((data) => {
+          if (mounted) setSessions(data);
+        })
+        .catch((err) => console.error("Failed to fetch notebook", err));
+    };
+
+    refresh();
+    const interval = window.setInterval(refresh, 2500);
+
+    return () => {
+      mounted = false;
+      window.clearInterval(interval);
+    };
   }, []);
 
   return (
     <main className="notebook-main">
-      {sessions.map((session) => (
+      {(reverseSessions ? [...sessions].reverse() : sessions).map((session) => (
         <section
           key={session.id}
           className="notebook-session"
           data-session-id={session.id}
         >
           <SessionHeader title={session.title} />
-          <TiptapEditor session={session} />
+          <TiptapEditor session={session} searchTerm={searchTerm} />
         </section>
       ))}
     </main>

@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 
-export const RightPanel: React.FC = () => {
+interface Props {
+  reverseSessions: boolean;
+  setReverseSessions: (value: boolean) => void;
+}
+
+export const RightPanel: React.FC<Props> = ({
+  reverseSessions,
+  setReverseSessions,
+}) => {
   const [showTimestamps, setShowTimestamps] = useState(false);
   const [showTags, setShowTags] = useState(true);
 
@@ -26,6 +34,14 @@ export const RightPanel: React.FC = () => {
             onChange={(e) => setShowTags(e.target.checked)}
           />
           Show tags
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={reverseSessions}
+            onChange={(e) => setReverseSessions(e.target.checked)}
+          />
+          Reverse session order
         </label>
       </div>
 

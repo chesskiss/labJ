@@ -30,8 +30,8 @@ class Transcriber:
     Public API:
         transcribe(audio_chunk: np.ndarray, sample_rate: int) -> tuple[str, Optional[str]]
     """
-    #TODO check if GPU available on windows, android, macos, ios, and choose int8_float16, float16, etc. 
-    def __init__(self, model_size: Optional[str] = "large-v3", compute_type: str = "int8"):
+    #TODO check if GPU available on windows, android, macos, ios, and choose int8_float16, float16, etc. Heavy whisper: large-v3
+    def __init__(self, model_size: Optional[str] = "small", compute_type: str = "int8"):
         self.sample_rate: int = STT_SAMPLE_RATE
         self.model_size: str = model_size or STT_MODEL_SIZE
 

@@ -40,6 +40,35 @@ lab-assistant-ai/
     ├── test_parser.py
     └── ...
 
+
+ui/
+  src/
+    main.tsx          ← bootstraps React
+    App.tsx           ← top-level app
+
+    types.ts          ← shared data types (Session, Block, etc.)
+
+    api/
+      client.ts       ← low-level HTTP wrapper (GET/POST)
+      sessions.ts     ← functions to call /sessions + /notebook
+      commands.ts     ← function to call /commands
+
+    components/
+      layout/
+        Layout.tsx        ← main 3-column layout (left, center, right)
+        LeftSidebar.tsx   ← sessions + favorites + search
+        RightPanel.tsx    ← filters, toggles, “Ask assistant” input
+
+      notebook/
+        NotebookView.tsx  ← renders all NotebookSession in a scroll
+        SessionHeader.tsx ← title + divider for each session block
+        TiptapEditor.tsx  ← editable content area (continuous document)
+
+      console/
+        CommandConsole.tsx ← bottom-right command input (text → /commands)
+
+-----------------------------------------------------
+
 High-level architecture / hierarchy scheme
 +--------------------+
 |  MicrophoneStream  |  (audio/mic_stream.py)
@@ -66,3 +95,31 @@ High-level architecture / hierarchy scheme
      |  (state: is_transcribing, session_id)
      |
 GUI <--------------------------------------------------> DB (journal.sqlite)
+
+
+
+# Debug
+## Cache
+logger.info("load_cache_from_db: %d sessions", len(sessions))
+add_log_block(f"cache loaded: {len(sessions)} sessions")
+
+## Endpoints hit
+logger.info("GET /sessions")
+add_log_block("GET /sessions")
+
+logger.info("GET /notebook")
+add_log_block("GET /notebook")
+
+## Commands received
+logger.info(f"POST /commands: {req.text!r}")
+add_log_block(f"POST /commands: {req.text!r}")
+
+add_log_block(f"NEW_SESSION created: {session_id} title={title}")
+add_log_block(f"APPEND_NOTE to session_id={session_id}")
+
+
+# Context prompt for gpt
+Some context for the project - the goal is to create an AI lab journal + assistant that will be able to pull information from datasets, generate tables and graph, and even write in the journal via voice, hands-free, commands. 
+
+To start, I want to only enable writing with voice - STT. 
+Alls the componenets are ready, but the transcriber is still not fully connected to the tyopescript ui

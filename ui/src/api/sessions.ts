@@ -7,3 +7,8 @@ export async function fetchSessions() {
 export async function fetchNotebook() {
   return apiGet("/notebook");
 }
+
+export async function searchSessions(query: string) {
+  const params = new URLSearchParams({ q: query });
+  return apiGet(`/search?${params.toString()}`);
+}
