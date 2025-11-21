@@ -1,5 +1,5 @@
 # agents/controller.py
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import Dict, Any, List, Optional
@@ -317,6 +317,9 @@ def on_startup():
 class CommandRequest(BaseModel):
     text: str
 
+class UpdateSessionTitleRequest(BaseModel):
+    title: str
+
 
 # ---------- API endpoints ----------
 @app.get("/sessions")
@@ -362,6 +365,29 @@ def handle_command(req: CommandRequest):
     text = req.text.strip()
     result = parse_and_apply_command(text)
     return {"status": "ok", "applied": result}
+
+
+@app.put("/sessions/{session_id}/title")
+def update_session_title(session_id: int, req: UpdateSessionTitleRequest):
+    """
+    Rename a session; updates DB and RAM cache.
+    """
+    db = SessionLocal()
+    try:
+        s = db.query(Session).filter(Session.id == session_id).first()
+        if not s:
+            raise HTTPException(status_code=404, detail="Session not found")
+        s.title = req.title.strip() or f"Session {session_id}"
+        db.commit()
+
+        if session_id in SESSION_CACHE:
+            SESSION_CACHE[session_id]["title"] = s.title
+
+        add_log_block(f"Session {session_id} renamed to {s.title!r}")
+        logger.info("Session %s renamed to %s", session_id, s.title)
+        return {"status": "ok", "session_id": session_id, "title": s.title}
+    finally:
+        db.close()
 
 
 # ---------- Search ----------
