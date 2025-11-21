@@ -268,6 +268,29 @@ body {
   background: linear-gradient(to right, #e5e7eb, transparent);
 }
 
+.archived-list .archived-item {
+  margin-bottom: 8px;
+}
+
+.archived-toggle {
+  border: none;
+  background: transparent;
+  padding: 4px 0;
+  font-size: 13px;
+  color: #374151;
+  cursor: pointer;
+}
+
+.archived-toggle:hover {
+  color: #111827;
+}
+
+.archived-content {
+  padding-left: 16px;
+  border-left: 1px solid rgba(17, 24, 39, 0.08);
+  margin-top: 4px;
+}
+
 /* ===== Command console (bottom-right) ===== */
 
 .command-console {

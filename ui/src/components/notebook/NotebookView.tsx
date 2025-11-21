@@ -12,6 +12,7 @@ interface Session {
   id: string;
   title: string;
   blocks: NotebookBlock[];
+  isArchived?: boolean;
 }
 
 interface Props {
@@ -22,6 +23,7 @@ interface Props {
 export const NotebookView: React.FC<Props> = ({ searchTerm, reverseSessions }) => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionState, setSessionState] = useState<Record<string, { html: string; dirty: boolean }>>({});
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -59,32 +61,52 @@ export const NotebookView: React.FC<Props> = ({ searchTerm, reverseSessions }) =
     };
   }, []);
 
+  // Recompute non-dirty HTML when sessions or search term change
+  useEffect(() => {
+    setSessionState((prev) => {
+      const next = { ...prev };
+      for (const session of sessions) {
+        const key = String(session.id);
+        const existing = prev[key];
+        if (!existing || !existing.dirty) {
+          const html = blocksToHtml(session.blocks, searchTerm);
+          if (!existing || existing.html !== html) {
+            next[key] = { html, dirty: false };
+          }
+        }
+      }
+      return next;
+    });
+  }, [sessions, searchTerm]);
+
   return (
     <main className="notebook-main">
-      {(reverseSessions ? [...sessions].reverse() : sessions).map((session) => {
-        const blocks = session.blocks.filter((b) => b.type !== "log");
-        return (
-          <section
-            key={session.id}
-            className="notebook-session"
-            data-session-id={session.id}
-          >
-            {/* Title intentionally hidden for a clean, continuous notebook */}
-            <TiptapEditor
-              session={{ ...session, blocks }}
-              searchTerm={searchTerm}
-              html={sessionState[String(session.id)]?.html ?? blocksToHtml(blocks, searchTerm)}
-              isDirty={Boolean(sessionState[String(session.id)]?.dirty)}
-              onChange={(html) =>
-                setSessionState((prev) => ({
-                  ...prev,
-                  [String(session.id)]: { html, dirty: true },
-                }))
-              }
-            />
-          </section>
-        );
-      })}
+      {(reverseSessions ? [...sessions].reverse() : sessions)
+        .filter((s) => !s.isArchived)
+        .map((session) => {
+          const blocks = session.blocks.filter((b) => b.type !== "log");
+          return (
+            <section
+              key={session.id}
+              className="notebook-session"
+              data-session-id={session.id}
+            >
+              {/* Title intentionally hidden for a clean, continuous notebook */}
+              <TiptapEditor
+                session={{ ...session, blocks }}
+                searchTerm={searchTerm}
+                html={sessionState[String(session.id)]?.html ?? blocksToHtml(blocks, searchTerm)}
+                isDirty={Boolean(sessionState[String(session.id)]?.dirty)}
+                onChange={(html) =>
+                  setSessionState((prev) => ({
+                    ...prev,
+                    [String(session.id)]: { html, dirty: true },
+                  }))
+                }
+              />
+            </section>
+          );
+        })}
     </main>
   );
 };
