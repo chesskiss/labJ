@@ -49,12 +49,18 @@ export const LeftSidebar: React.FC<Props> = ({
       fetcher()
         .then((data) => {
           if (!mounted) return;
-          setSessions(
-            data.map((s: Session) => ({
-              ...s,
-              isFavorite: favoriteIds.includes(Number(s.id)),
-            }))
-          );
+          setSessions((prev) => {
+            const prevMap = new Map(prev.map((p) => [String(p.id), p]));
+            return data.map((s: Session) => {
+              const existing = prevMap.get(String(s.id));
+              return {
+                ...s,
+                isFavorite:
+                  (existing && existing.isFavorite) ||
+                  favoriteIds.includes(Number(s.id)),
+              };
+            });
+          });
           if (data.length && !activeSessionId) {
             setActiveSessionId(data[data.length - 1].id);
           }
@@ -253,16 +259,18 @@ export const LeftSidebar: React.FC<Props> = ({
                 onDragStart={(e) => handleDragStart(s.id, e)}
               >
                 <div className="session-title">
-                  <button
-                    className={`fav-toggle ${s.isFavorite ? "active" : ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      markFavorite(s.id, !s.isFavorite);
-                    }}
-                    title={s.isFavorite ? "Remove from favorites" : "Add to favorites"}
-                  >
-                    ★
-                  </button>
+                  {s.isFavorite && (
+                    <button
+                      className="fav-toggle active"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markFavorite(s.id, false);
+                      }}
+                      title="Remove from favorites"
+                    >
+                      ★
+                    </button>
+                  )}
                   {isEditing ? (
                     <input
                       className="sidebar-input"
@@ -309,16 +317,18 @@ export const LeftSidebar: React.FC<Props> = ({
                 onDragStart={(e) => handleDragStart(s.id, e)}
               >
                 <div className="session-title">
-                  <button
-                    className={`fav-toggle ${s.isFavorite ? "active" : ""}`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      markFavorite(s.id, !s.isFavorite);
-                    }}
-                    title={s.isFavorite ? "Remove from favorites" : "Add to favorites"}
-                  >
-                    ★
-                  </button>
+                  {s.isFavorite && (
+                    <button
+                      className="fav-toggle active"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        markFavorite(s.id, false);
+                      }}
+                      title="Remove from favorites"
+                    >
+                      ★
+                    </button>
+                  )}
                   {isEditing ? (
                     <input
                       className="sidebar-input"
