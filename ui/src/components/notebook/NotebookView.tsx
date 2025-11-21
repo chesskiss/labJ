@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { fetchNotebook } from "../../api/sessions";
-import { SessionHeader } from "./SessionHeader";
 import { TiptapEditor } from "./TiptapEditor";
 
 interface NotebookBlock {
@@ -51,7 +50,7 @@ export const NotebookView: React.FC<Props> = ({ searchTerm, reverseSessions }) =
           className="notebook-session"
           data-session-id={session.id}
         >
-          <SessionHeader title={session.title} />
+          {/* Title intentionally hidden for a clean, continuous notebook */}
           <TiptapEditor session={session} searchTerm={searchTerm} />
         </section>
       ))}
