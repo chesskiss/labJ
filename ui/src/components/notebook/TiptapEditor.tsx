@@ -29,8 +29,15 @@ export const TiptapEditor: React.FC<Props> = ({ session, searchTerm, html, isDir
     content: html,
     autofocus: false,
     onUpdate: ({ editor }) => {
-      const html = editor.getHTML();
-      onChange(html);
+      const nextHtml = editor.getHTML();
+      const isFocused =
+        typeof (editor as any).isFocused === "function"
+          ? (editor as any).isFocused()
+          : !!(editor as any).isFocused;
+
+      if (isFocused) {
+        onChange(nextHtml);
+      }
     },
   });
 

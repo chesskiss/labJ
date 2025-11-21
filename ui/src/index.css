@@ -90,6 +90,11 @@ body {
   margin-bottom: 6px;
 }
 
+.sidebar-label.resizable {
+  cursor: ns-resize;
+  user-select: none;
+}
+
 .session-list {
   list-style: none;
   padding: 0;

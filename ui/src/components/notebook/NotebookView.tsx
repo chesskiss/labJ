@@ -4,7 +4,7 @@ import { TiptapEditor, blocksToHtml } from "./TiptapEditor";
 
 interface NotebookBlock {
   id: string;
-  type: "paragraph" | "chart" | "graph" | "table";
+  type: "paragraph" | "chart" | "graph" | "table" | "log";
   content: any;
 }
 
@@ -61,27 +61,30 @@ export const NotebookView: React.FC<Props> = ({ searchTerm, reverseSessions }) =
 
   return (
     <main className="notebook-main">
-      {(reverseSessions ? [...sessions].reverse() : sessions).map((session) => (
-        <section
-          key={session.id}
-          className="notebook-session"
-          data-session-id={session.id}
-        >
-          {/* Title intentionally hidden for a clean, continuous notebook */}
-          <TiptapEditor
-            session={session}
-            searchTerm={searchTerm}
-            html={sessionState[String(session.id)]?.html ?? blocksToHtml(session.blocks, searchTerm)}
-            isDirty={Boolean(sessionState[String(session.id)]?.dirty)}
-            onChange={(html) =>
-              setSessionState((prev) => ({
-                ...prev,
-                [String(session.id)]: { html, dirty: true },
-              }))
-            }
-          />
-        </section>
-      ))}
+      {(reverseSessions ? [...sessions].reverse() : sessions).map((session) => {
+        const blocks = session.blocks.filter((b) => b.type !== "log");
+        return (
+          <section
+            key={session.id}
+            className="notebook-session"
+            data-session-id={session.id}
+          >
+            {/* Title intentionally hidden for a clean, continuous notebook */}
+            <TiptapEditor
+              session={{ ...session, blocks }}
+              searchTerm={searchTerm}
+              html={sessionState[String(session.id)]?.html ?? blocksToHtml(blocks, searchTerm)}
+              isDirty={Boolean(sessionState[String(session.id)]?.dirty)}
+              onChange={(html) =>
+                setSessionState((prev) => ({
+                  ...prev,
+                  [String(session.id)]: { html, dirty: true },
+                }))
+              }
+            />
+          </section>
+        );
+      })}
     </main>
   );
 };

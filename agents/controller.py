@@ -48,6 +48,8 @@ transcriber = Transcriber(model_size=STT_MODEL_SIZE, compute_type="int8")
 STT_THREAD_STARTED = False
 # Track listening + whether we should append text while still listening.
 STT_STATE = {"listening": True, "transcribing": True}
+# Track current STT target session
+CURRENT_SESSION_ID: Optional[int] = None
 
 
 def now_iso() -> str:
@@ -70,15 +72,15 @@ def add_log_block(message: str):
             "blocks": [],
         }
 
-    # always append to the "last" session for now
-    last_sid = sorted(SESSION_CACHE.keys())[-1]
-    SESSION_CACHE[last_sid]["blocks"].append(
-        {
-            "id": f"log-{datetime.utcnow().timestamp()}",
-            "type": "paragraph",
-            "content": {"text": f"[log] {message}"},
-        }
-    )
+    # always append to the "last" session for now #TODO - good prints
+    # last_sid = sorted(SESSION_CACHE.keys())[-1]
+    # SESSION_CACHE[last_sid]["blocks"].append(
+    #     {
+    #         "id": f"log-{datetime.utcnow().timestamp()}",
+    #         "type": "log",
+    #         "content": {"text": f"[log] {message}"},
+    #     }
+    # )
 
 
 def load_cache_from_db() -> None:
@@ -188,11 +190,32 @@ def ensure_live_session_id() -> int:
     Returns an existing session id to append STT to,
     or creates one if none exist.
     """
-    global SESSION_CACHE
-    if SESSION_CACHE:
-        # append to the last session by id
-        return sorted(SESSION_CACHE.keys())[-1]
+    global SESSION_CACHE, CURRENT_SESSION_ID
 
+    if CURRENT_SESSION_ID and CURRENT_SESSION_ID in SESSION_CACHE:
+        return CURRENT_SESSION_ID
+
+    db = SessionLocal()
+    try:
+        last_db_session = db.query(Session).order_by(Session.id.desc()).first()
+    finally:
+        db.close()
+
+    if not SESSION_CACHE and last_db_session:
+        load_cache_from_db()
+
+    if CURRENT_SESSION_ID and CURRENT_SESSION_ID in SESSION_CACHE:
+        return CURRENT_SESSION_ID
+
+    if last_db_session and last_db_session.id in SESSION_CACHE:
+        CURRENT_SESSION_ID = last_db_session.id
+        return CURRENT_SESSION_ID
+
+    if SESSION_CACHE:
+        CURRENT_SESSION_ID = sorted(SESSION_CACHE.keys())[-1]
+        return CURRENT_SESSION_ID
+
+    # Create fresh live session
     title = "Live Lab Session"
     session_id = create_session_in_db(title)
     SESSION_CACHE[session_id] = {
@@ -200,9 +223,11 @@ def ensure_live_session_id() -> int:
         "title": title,
         "description": "",
         "isFavorite": False,
+        "isArchived": False,
         "blocks": [],
     }
     add_log_block(f"Created live session for STT: {session_id}")
+    CURRENT_SESSION_ID = session_id
     return session_id
 
 def handle_stt_text(text: str):
@@ -238,7 +263,7 @@ def handle_stt_action(action: str, stream: Optional[MicrophoneStream] = None) ->
     """
     React to control phrases detected by the Transcriber.
     """
-    global STT_STATE
+    global STT_STATE, CURRENT_SESSION_ID
 
     if action == "pause_transcription":
         STT_STATE["transcribing"] = False
@@ -257,6 +282,20 @@ def handle_stt_action(action: str, stream: Optional[MicrophoneStream] = None) ->
                 stream.stop()
             except Exception:
                 logger.exception("Error stopping microphone stream after stop_listening")
+    elif action == "new_session":
+        title = f"Live Session {now_iso()}"
+        session_id = create_session_in_db(title)
+        SESSION_CACHE[session_id] = {
+          "id": session_id,
+          "title": title,
+          "description": "",
+          "isFavorite": False,
+          "isArchived": False,
+          "blocks": [],
+        }
+        CURRENT_SESSION_ID = session_id
+        add_log_block(f"STT command: started new session {session_id}")
+        logger.info("STT new session created id=%s", session_id)
 
 def stt_worker():
     """

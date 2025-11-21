@@ -37,6 +37,11 @@ export const LeftSidebar: React.FC<Props> = ({
   const [titleDraft, setTitleDraft] = useState("");
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [favoriteIds, setFavoriteIds] = useState<number[]>(loadFavorites);
+  const [favoritesHeight, setFavoritesHeight] = useState<number>(160);
+  const [archivedHeight, setArchivedHeight] = useState<number>(140);
+  const [dragTarget, setDragTarget] = useState<"favorites" | "archived" | null>(null);
+  const [dragStartY, setDragStartY] = useState<number | null>(null);
+  const [dragStartHeight, setDragStartHeight] = useState<number | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -221,6 +226,27 @@ export const LeftSidebar: React.FC<Props> = ({
 
   const allowDrop = (e: React.DragEvent) => e.preventDefault();
 
+  // Drag-to-resize sections by dragging their headers
+  useEffect(() => {
+    const onMove = (e: MouseEvent) => {
+      if (dragTarget === "favorites") {
+        setFavoritesHeight((h) => Math.max(100, Math.min(400, h + e.movementY)));
+      } else if (dragTarget === "archived") {
+        setArchivedHeight((h) => Math.max(80, Math.min(300, h + e.movementY)));
+      }
+    };
+    const onUp = () => setDragTarget(null);
+
+    if (dragTarget) {
+      window.addEventListener("mousemove", onMove);
+      window.addEventListener("mouseup", onUp);
+    }
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+    };
+  }, [dragTarget]);
+
   return (
     <aside className="sidebar-left">
       <div className="sidebar-header">
@@ -294,13 +320,27 @@ export const LeftSidebar: React.FC<Props> = ({
       </div>
 
       <div className="sidebar-section">
-        <div className="sidebar-label">Favorites</div>
+        <div className="sidebar-label resizable"
+          onMouseDown={(e) => {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            setDragStartY(e.clientY);
+            setDragStartHeight(favoritesHeight);
+            setDragTarget("favorites");
+          }}
+          title="Drag to resize"
+        >
+          Favorites
+        </div>
+
+
         <ul
           className="session-list"
           tabIndex={0}
           onKeyDown={handleListKeyDown}
           onDragOver={allowDrop}
           onDrop={(e) => handleDrop("favorites", e)}
+          style={{ minHeight: favoritesHeight }}
         >
           {favorites.map((s) => {
             const isActive = String(s.id) === activeSessionId;
@@ -349,11 +389,22 @@ export const LeftSidebar: React.FC<Props> = ({
       </div>
 
       <div className="sidebar-section">
-        <div className="sidebar-label">Archived</div>
+        <div
+          className="sidebar-label resizable"
+          onMouseDown={(e) => {
+            if (e.button !== 0) return;
+            e.preventDefault();
+            setDragTarget("archived");
+          }}
+          title="Drag to resize"
+        >
+          Archived
+        </div>
         <ul
           className="session-list"
           onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => handleDrop("archived", e)}
+          style={{ minHeight: archivedHeight }}
         >
           {archived.map((s) => (
             <li

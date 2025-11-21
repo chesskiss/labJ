@@ -26,6 +26,13 @@ class TriggerEvaluator:
             "terminate",
             "shutdown",
         }
+        self.new_session_keywords = {
+            "new session",
+            "new notebook",
+            "start new session",
+            "begin new session",
+            "create new session",
+        }
 
 
     def evaluate(self, text):
@@ -39,6 +46,8 @@ class TriggerEvaluator:
 
         if any(kw in lowered for kw in self.stop_listening_keywords):
             return "stop_listening"
+        elif any(kw in lowered for kw in self.new_session_keywords):
+            return "new_session"
         elif any(kw in lowered for kw in self.start_transcription_keywords):
             return "resume_transcription"
         elif any(kw in lowered for kw in self.stop_transcription_keywords):
@@ -54,5 +63,6 @@ class TriggerEvaluator:
             self.stop_transcription_keywords
             | self.start_transcription_keywords
             | self.stop_listening_keywords
+            | self.new_session_keywords
         )
         return any(kw in lowered for kw in all_keywords)
