@@ -18,29 +18,29 @@ interface Session {
 interface Props {
   session: Session;
   searchTerm: string;
+  html: string;
+  isDirty: boolean;
+  onChange: (html: string) => void;
 }
 
-export const TiptapEditor: React.FC<Props> = ({ session, searchTerm }) => {
+export const TiptapEditor: React.FC<Props> = ({ session, searchTerm, html, isDirty, onChange }) => {
   const editor = useEditor({
     extensions: [StarterKit, Highlight],
-    content: blocksToHtml(session.blocks, searchTerm),
+    content: html,
     autofocus: false,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
-      // TODO: send updated HTML or structured data to backend
-      // e.g. POST /sessions/:id/content
-      // console.log("updated content", html);
+      onChange(html);
     },
   });
 
   useEffect(() => {
     if (!editor) return;
 
-    const html = blocksToHtml(session.blocks, searchTerm);
-    if (html !== editor.getHTML()) {
+    if (!isDirty && html !== editor.getHTML()) {
       editor.commands.setContent(html);
     }
-  }, [editor, session.id, session.blocks, searchTerm]);
+  }, [editor, session.id, html, isDirty]);
 
   return (
     <div className="tiptap-wrapper">
@@ -50,7 +50,7 @@ export const TiptapEditor: React.FC<Props> = ({ session, searchTerm }) => {
 };
 
 // minimal conversion: in real life you’ll store structured blocks
-function blocksToHtml(blocks: NotebookBlock[], searchTerm: string): string {
+export function blocksToHtml(blocks: NotebookBlock[], searchTerm: string): string {
   return blocks
     .map((b) => {
       if (b.type === "paragraph") {

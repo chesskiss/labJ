@@ -66,8 +66,8 @@ lab-assistant-ai/
 
 4. **Run the application:**
    ```bash
-   uvicorn agents.controller:app --reload #backend
-   cd ui && npm run dev # frontend
+   uvicorn agents.controller:app --reload --host 0.0.0.0 --port 8000 #backend
+   cd ui && npm run dev # frontend (run from root)
    ``` 
 
 ## Current Status

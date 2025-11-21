@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { fetchSessions, searchSessions, updateSessionTitle } from "../../api/sessions";
+import { fetchSessions, searchSessions, updateSessionTitle, archiveSession } from "../../api/sessions";
 
 interface Session {
   id: string | number;
   title: string;
   description?: string;
   isFavorite?: boolean;
+  isArchived?: boolean;
 }
 
 interface Props {
@@ -13,6 +14,17 @@ interface Props {
   setSearchTerm: (value: string) => void;
   reverseSessions: boolean;
 }
+
+const loadFavorites = (): number[] => {
+  try {
+    const raw = localStorage.getItem("labj_favorites");
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.map(Number).filter((n) => !Number.isNaN(n)) : [];
+  } catch {
+    return [];
+  }
+};
 
 export const LeftSidebar: React.FC<Props> = ({
   searchTerm,
@@ -23,6 +35,8 @@ export const LeftSidebar: React.FC<Props> = ({
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [titleDraft, setTitleDraft] = useState("");
+  const [hoverId, setHoverId] = useState<string | null>(null);
+  const [favoriteIds, setFavoriteIds] = useState<number[]>(loadFavorites);
 
   useEffect(() => {
     let mounted = true;
@@ -35,7 +49,12 @@ export const LeftSidebar: React.FC<Props> = ({
       fetcher()
         .then((data) => {
           if (!mounted) return;
-          setSessions(data);
+          setSessions(
+            data.map((s: Session) => ({
+              ...s,
+              isFavorite: favoriteIds.includes(Number(s.id)),
+            }))
+          );
           if (data.length && !activeSessionId) {
             setActiveSessionId(data[data.length - 1].id);
           }
@@ -50,11 +69,22 @@ export const LeftSidebar: React.FC<Props> = ({
       mounted = false;
       window.clearInterval(interval);
     };
-  }, [searchTerm, activeSessionId, editingId]);
+  }, [searchTerm, activeSessionId, editingId, favoriteIds]);
+
+  // Persist favorites locally
+  useEffect(() => {
+    try {
+      localStorage.setItem("labj_favorites", JSON.stringify(favoriteIds));
+    } catch {
+      /* ignore */
+    }
+  }, [favoriteIds]);
 
   const ordered = reverseSessions ? [...sessions].reverse() : sessions;
-  const favorites = ordered.filter((s) => s.isFavorite);
-  const nonFavorites = ordered.filter((s) => !s.isFavorite);
+  const activeSessions = ordered.filter((s) => !s.isArchived);
+  const favorites = activeSessions.filter((s) => s.isFavorite);
+  const nonFavorites = activeSessions; // show favorites in the main list too
+  const archived = ordered.filter((s) => s.isArchived);
 
   const handleSelectSession = (id: string | number) => {
     setActiveSessionId(String(id));
@@ -98,6 +128,93 @@ export const LeftSidebar: React.FC<Props> = ({
     }
   };
 
+  const markFavorite = (id: string | number, isFav: boolean) => {
+    const numId = Number(id);
+    setFavoriteIds((prev) => {
+      const next = new Set(prev);
+      if (isFav) next.add(numId);
+      else next.delete(numId);
+      return Array.from(next);
+    });
+    setSessions((prev) =>
+      prev.map((s) =>
+        String(s.id) === String(id) ? { ...s, isFavorite: isFav } : s
+      )
+    );
+    if (String(id) === activeSessionId && !isFav && sessions.find((s) => String(s.id) === String(id))?.isArchived) {
+      setActiveSessionId(null);
+    }
+  };
+
+  const setArchiveState = (id: string | number, archivedState: boolean) => {
+    setSessions((prev) =>
+      prev.map((s) =>
+        String(s.id) === String(id) ? { ...s, isArchived: archivedState } : s
+      )
+    );
+    if (archivedState) {
+      markFavorite(id, false);
+      if (String(id) === activeSessionId) setActiveSessionId(null);
+    }
+  };
+
+  const handleListKeyDown = async (e: React.KeyboardEvent<HTMLUListElement>) => {
+    if (!activeSessionId || editingId) return;
+    if (e.key === "Backspace" || e.key === "Delete") {
+      try {
+        await archiveSession(activeSessionId, true);
+        setArchiveState(activeSessionId, true);
+      } catch (err) {
+        console.error("Failed to archive session", err);
+      }
+    }
+  };
+
+  // Global key listener so “Delete/Backspace” archives the active session even if focus moves.
+  useEffect(() => {
+    const onKey = async (e: KeyboardEvent) => {
+      if (editingId) return;
+      if (e.key === "Backspace" || e.key === "Delete") {
+        if (!activeSessionId) return;
+        try {
+          await archiveSession(activeSessionId, true);
+          setArchiveState(activeSessionId, true);
+        } catch (err) {
+          console.error("Failed to archive session", err);
+        }
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeSessionId, editingId]);
+
+  const handleDragStart = (id: string | number, e: React.DragEvent) => {
+    e.dataTransfer.setData("text/plain", String(id));
+  };
+
+  const handleDrop = async (
+    target: "sessions" | "favorites" | "archived",
+    e: React.DragEvent
+  ) => {
+    e.preventDefault();
+    const id = e.dataTransfer.getData("text/plain");
+    if (!id) return;
+    try {
+      if (target === "archived") {
+        await archiveSession(id, true);
+        setArchiveState(id, true);
+      } else {
+        await archiveSession(id, false);
+        setArchiveState(id, false);
+        markFavorite(id, target === "favorites");
+      }
+    } catch (err) {
+      console.error("Failed to move session", err);
+    }
+  };
+
+  const allowDrop = (e: React.DragEvent) => e.preventDefault();
+
   return (
     <aside className="sidebar-left">
       <div className="sidebar-header">
@@ -114,18 +231,38 @@ export const LeftSidebar: React.FC<Props> = ({
         />
 
         <div className="sidebar-label">Sessions</div>
-        <ul className="session-list">
+        <ul
+          className="session-list"
+          tabIndex={0}
+          onKeyDown={handleListKeyDown}
+          onDragOver={allowDrop}
+          onDrop={(e) => handleDrop("sessions", e)}
+        >
           {nonFavorites.map((s) => {
             const isActive = String(s.id) === activeSessionId;
             const isEditing = editingId === Number(s.id);
             return (
               <li
                 key={s.id}
-                className={`session-item ${isActive ? "active" : ""}`}
+                className={`session-item ${isActive ? "active" : ""} ${s.isArchived ? "archived" : ""}`}
                 onClick={() => handleSelectSession(s.id)}
                 onDoubleClick={() => startEditing(s)}
+                onMouseEnter={() => setHoverId(String(s.id))}
+                onMouseLeave={() => setHoverId(null)}
+                draggable
+                onDragStart={(e) => handleDragStart(s.id, e)}
               >
                 <div className="session-title">
+                  <button
+                    className={`fav-toggle ${s.isFavorite ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      markFavorite(s.id, !s.isFavorite);
+                    }}
+                    title={s.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                  >
+                    ★
+                  </button>
                   {isEditing ? (
                     <input
                       className="sidebar-input"
@@ -150,18 +287,38 @@ export const LeftSidebar: React.FC<Props> = ({
 
       <div className="sidebar-section">
         <div className="sidebar-label">Favorites</div>
-        <ul className="session-list">
+        <ul
+          className="session-list"
+          tabIndex={0}
+          onKeyDown={handleListKeyDown}
+          onDragOver={allowDrop}
+          onDrop={(e) => handleDrop("favorites", e)}
+        >
           {favorites.map((s) => {
             const isActive = String(s.id) === activeSessionId;
             const isEditing = editingId === Number(s.id);
             return (
               <li
                 key={s.id}
-                className={`session-item ${isActive ? "active" : ""}`}
+                className={`session-item ${isActive ? "active" : ""} ${s.isArchived ? "archived" : ""}`}
                 onClick={() => handleSelectSession(s.id)}
                 onDoubleClick={() => startEditing(s)}
+                onMouseEnter={() => setHoverId(String(s.id))}
+                onMouseLeave={() => setHoverId(null)}
+                draggable
+                onDragStart={(e) => handleDragStart(s.id, e)}
               >
                 <div className="session-title">
+                  <button
+                    className={`fav-toggle ${s.isFavorite ? "active" : ""}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      markFavorite(s.id, !s.isFavorite);
+                    }}
+                    title={s.isFavorite ? "Remove from favorites" : "Add to favorites"}
+                  >
+                    ★
+                  </button>
                   {isEditing ? (
                     <input
                       className="sidebar-input"
@@ -178,6 +335,26 @@ export const LeftSidebar: React.FC<Props> = ({
               </li>
             );
           })}
+        </ul>
+      </div>
+
+      <div className="sidebar-section">
+        <div className="sidebar-label">Archived</div>
+        <ul
+          className="session-list"
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => handleDrop("archived", e)}
+        >
+          {archived.map((s) => (
+            <li
+              key={s.id}
+              className="session-item archived"
+              draggable
+              onDragStart={(e) => handleDragStart(s.id, e)}
+            >
+              <div className="session-title">{s.title}</div>
+            </li>
+          ))}
         </ul>
       </div>
     </aside>

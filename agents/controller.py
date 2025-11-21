@@ -118,6 +118,7 @@ def load_cache_from_db() -> None:
                 "title": s.title or f"Session {s.id}",
                 "description": "",  # you can derive from metadata or first utterance later
                 "isFavorite": False,  # store this in metadata if you want
+                "isArchived": bool(s.ended_at),
                 "blocks": blocks,
             }
     finally:
@@ -320,6 +321,12 @@ class CommandRequest(BaseModel):
 class UpdateSessionTitleRequest(BaseModel):
     title: str
 
+class CreateSessionRequest(BaseModel):
+    title: Optional[str] = None
+
+class ArchiveSessionRequest(BaseModel):
+    archived: bool = True
+
 
 # ---------- API endpoints ----------
 @app.get("/sessions")
@@ -334,6 +341,7 @@ def list_sessions():
             "title": s["title"],
             "description": s.get("description", ""),
             "isFavorite": s.get("isFavorite", False),
+            "isArchived": s.get("isArchived", False),
         }
         for sid, s in sorted(SESSION_CACHE.items())
     ]
@@ -349,6 +357,7 @@ def get_notebook():
             "id": sid,
             "title": s["title"],
             "blocks": s.get("blocks", []),
+            "isArchived": s.get("isArchived", False),
         }
         for sid, s in sorted(SESSION_CACHE.items())
     ]
@@ -365,6 +374,51 @@ def handle_command(req: CommandRequest):
     text = req.text.strip()
     result = parse_and_apply_command(text)
     return {"status": "ok", "applied": result}
+
+
+@app.post("/sessions")
+def create_session(req: CreateSessionRequest):
+    """
+    Create a new session with an optional title.
+    """
+    title = (req.title or "").strip() or "New Session"
+    session_id = create_session_in_db(title)
+    SESSION_CACHE[session_id] = {
+        "id": session_id,
+        "title": title,
+        "description": "",
+        "isFavorite": False,
+        "isArchived": False,
+        "blocks": [],
+    }
+    add_log_block(f"Session created via API: {session_id} ({title})")
+    logger.info("Session created via API id=%s title=%s", session_id, title)
+    return {"status": "ok", "session_id": session_id, "title": title}
+
+
+@app.post("/sessions/{session_id}/archive")
+def archive_session(session_id: int, req: ArchiveSessionRequest):
+    """
+    Mark a session archived (sets ended_at). Can also unarchive if archived=False.
+    """
+    db = SessionLocal()
+    try:
+        s = db.query(Session).filter(Session.id == session_id).first()
+        if not s:
+            raise HTTPException(status_code=404, detail="Session not found")
+
+        s.ended_at = now_iso() if req.archived else None
+        db.commit()
+
+        if session_id in SESSION_CACHE:
+            SESSION_CACHE[session_id]["isArchived"] = bool(s.ended_at)
+
+        action = "archived" if s.ended_at else "unarchived"
+        add_log_block(f"Session {session_id} {action}")
+        logger.info("Session %s %s", session_id, action)
+        return {"status": "ok", "session_id": session_id, "archived": bool(s.ended_at)}
+    finally:
+        db.close()
 
 
 @app.put("/sessions/{session_id}/title")

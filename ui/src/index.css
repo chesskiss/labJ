@@ -103,6 +103,9 @@ body {
   cursor: pointer;
   margin-bottom: 4px;
   transition: background-color 0.12s ease, color 0.12s ease;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .session-item:hover {
@@ -117,6 +120,32 @@ body {
 .session-title {
   font-size: 13px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.session-item.archived {
+  opacity: 0.55;
+  text-decoration: line-through;
+}
+
+.fav-toggle {
+  border: none;
+  background: transparent;
+  color: #d1d5db;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  font-size: 14px;
+}
+
+.fav-toggle.active {
+  color: #f59e0b;
+}
+
+.fav-toggle:hover {
+  color: #f59e0b;
 }
 
 .session-desc {

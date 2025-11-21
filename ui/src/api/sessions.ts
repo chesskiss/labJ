@@ -1,4 +1,4 @@
-import { apiGet, apiPut } from "./client";
+import { apiGet, apiPost, apiPut } from "./client";
 
 export async function fetchSessions() {
   return apiGet("/sessions");
@@ -15,4 +15,8 @@ export async function searchSessions(query: string) {
 
 export async function updateSessionTitle(sessionId: number | string, title: string) {
   return apiPut(`/sessions/${sessionId}/title`, { title });
+}
+
+export async function archiveSession(sessionId: number | string, archived = true) {
+  return apiPost(`/sessions/${sessionId}/archive`, { archived });
 }
