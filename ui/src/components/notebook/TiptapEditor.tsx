@@ -5,7 +5,7 @@ import Highlight from "@tiptap/extension-highlight";
 
 interface NotebookBlock {
   id: string;
-  type: "paragraph" | "chart" | "graph" | "table";
+  type: "paragraph" | "chart" | "graph" | "table" | "log";
   content: any;
 }
 
@@ -17,13 +17,12 @@ interface Session {
 
 interface Props {
   session: Session;
-  searchTerm: string;
   html: string;
   isDirty: boolean;
   onChange: (html: string) => void;
 }
 
-export const TiptapEditor: React.FC<Props> = ({ session, searchTerm, html, isDirty, onChange }) => {
+export const TiptapEditor: React.FC<Props> = ({ session, html, isDirty, onChange }) => {
   const editor = useEditor({
     extensions: [StarterKit, Highlight],
     content: html,

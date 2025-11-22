@@ -35,13 +35,10 @@ export const LeftSidebar: React.FC<Props> = ({
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [titleDraft, setTitleDraft] = useState("");
-  const [hoverId, setHoverId] = useState<string | null>(null);
   const [favoriteIds, setFavoriteIds] = useState<number[]>(loadFavorites);
   const [favoritesHeight, setFavoritesHeight] = useState<number>(160);
   const [archivedHeight, setArchivedHeight] = useState<number>(140);
   const [dragTarget, setDragTarget] = useState<"favorites" | "archived" | null>(null);
-  const [dragStartY, setDragStartY] = useState<number | null>(null);
-  const [dragStartHeight, setDragStartHeight] = useState<number | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -279,8 +276,6 @@ export const LeftSidebar: React.FC<Props> = ({
                 className={`session-item ${isActive ? "active" : ""} ${s.isArchived ? "archived" : ""}`}
                 onClick={() => handleSelectSession(s.id)}
                 onDoubleClick={() => startEditing(s)}
-                onMouseEnter={() => setHoverId(String(s.id))}
-                onMouseLeave={() => setHoverId(null)}
                 draggable
                 onDragStart={(e) => handleDragStart(s.id, e)}
               >
@@ -324,8 +319,6 @@ export const LeftSidebar: React.FC<Props> = ({
           onMouseDown={(e) => {
             if (e.button !== 0) return;
             e.preventDefault();
-            setDragStartY(e.clientY);
-            setDragStartHeight(favoritesHeight);
             setDragTarget("favorites");
           }}
           title="Drag to resize"
@@ -351,8 +344,6 @@ export const LeftSidebar: React.FC<Props> = ({
                 className={`session-item ${isActive ? "active" : ""} ${s.isArchived ? "archived" : ""}`}
                 onClick={() => handleSelectSession(s.id)}
                 onDoubleClick={() => startEditing(s)}
-                onMouseEnter={() => setHoverId(String(s.id))}
-                onMouseLeave={() => setHoverId(null)}
                 draggable
                 onDragStart={(e) => handleDragStart(s.id, e)}
               >

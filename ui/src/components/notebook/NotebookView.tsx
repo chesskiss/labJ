@@ -23,7 +23,6 @@ interface Props {
 export const NotebookView: React.FC<Props> = ({ searchTerm, reverseSessions }) => {
   const [sessions, setSessions] = useState<Session[]>([]);
   const [sessionState, setSessionState] = useState<Record<string, { html: string; dirty: boolean }>>({});
-  const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -94,7 +93,6 @@ export const NotebookView: React.FC<Props> = ({ searchTerm, reverseSessions }) =
               {/* Title intentionally hidden for a clean, continuous notebook */}
               <TiptapEditor
                 session={{ ...session, blocks }}
-                searchTerm={searchTerm}
                 html={sessionState[String(session.id)]?.html ?? blocksToHtml(blocks, searchTerm)}
                 isDirty={Boolean(sessionState[String(session.id)]?.dirty)}
                 onChange={(html) =>
