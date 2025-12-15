@@ -1,14 +1,64 @@
+# Now
+! Clean code + Add missing 10 points from setup (vib). E.g. https://github.com/features/actions 
+
+! Add tests - backend + frontend. Ask GPT why so many files were changed first then send prompt:
+1. Read GPT's answer
+
+! Add a button/ marker that he's listening - improve UI with mic, etc.
+
+! STT 
+
+! Add MCP for the LLM prompt at the side, and perhaps for the calculator and to execute other tools
+https://modelcontextprotocol.io/docs/develop/build-server
+
+! Add calulator, + for units (mcl etc.)
+and put it in a seperate space/window so it won't put into the diary (like a note)
+
+
+!tables
+
+
+
+2. Edit first based on answer:
+You’re working in a Vite/TypeScript frontend under ui/ (FastAPI backend in agents/controller.py). Add a lean but high-value test setup using Playwright for E2E and Vitest for pure logic, focusing on stability (data-testid selectors) and minimal brittleness.
+Goals:
+- Add Playwright E2E tests for:
+  1) Search & highlight: load the app, type a query, matching text is wrapped in a highlight class (e.g., .highlight) and non-matches don’t get highlighted; clearing the query removes highlights. Use stable selectors (data-testid="search-input", data-testid="search-results", etc.).
+  2) Session/journal CRUD: create a new session, add text/blocks, verify it persists after reload; archiving toggles state and hides it from the active list.
+  3) Graph/table render: with a known dataset/response, a chart/table renders the expected number of bars/rows; show a “no data” state when empty.
+  4) API failure handling: mock a 500/timeout and assert an inline error banner/toast appears; recover after retry.
+  5) (Optional) Keyboard/a11y smoke: key shortcut focuses search, dialog focus trap, and a quick a11y snapshot to catch obvious misses.
+
+- Add a small Vitest unit test for the highlight logic (compute match ranges given text + query). Keep it pure and reusable by the UI.
+
+Constraints/notes:
+- Use data-testid for selectors; avoid brittle text/xpath. Add testids to components if missing.
+- Keep tests short and maintainable: assert on presence of classes/text/counts, not pixels. Use loose thresholds for any visual counts (e.g., expect n bars/rows).
+- Make tests run against `npm run dev` or a static build; document how to start the app before running Playwright.
+- Include a sample Playwright test for search/highlight (as above) in `ui/tests` or `ui/e2e` with `@playwright/test`.
+- Add scripts to package.json: `"test": "vitest"`, `"test:e2e": "playwright test"` (or similar).
+- If you add fixtures/mocks, keep them in `ui/tests/fixtures` and use stable dummy data.
+
+Deliverables:
+- New/updated test files with the above coverage.
+- Added data-testid hooks where needed in UI components.
+- Updated package.json scripts and minimal docs (README/SETUP) on how to run tests.
+
+! Compare open source eln, ask web gpt, find best, for example https://github.com/elabftw/elabftw 
+
+! Wrap project with Electron.
+
+
+
+------------------------------------------------
+
 # GUI
-🔥 Add auto-refresh so the GUI updates without clicking
-🔥 Add search / filter bar
 🔥 Add "timeline mode" grouping by minute
 🔥 Add dark-mode styling
 🔥 Add session metadata display
-🔥 Add ability to rename sessions
 🔥 Add expandable paragraph mode
 🔥 Add export-to-PDF for the transcript
 🔥 Add audio waveform or playback mode
-🔥 Or rewrite the GUI in React + FastAPI for a full desktop-grade UX
 
 
 
@@ -25,4 +75,10 @@ then env_config.py and stt/config.py might need altering.
 
 
 
-------------------------------------------------
+# Docker enablement
+- Enable mic access: run backend on host (not Docker) for macOS, or document Linux setup (bind /dev/snd, Pulse/PipeWire socket, --group-add audio) so sounddevice works; add a runtime check/friendly error if no input devices are available.
+- Codify environment needs: set and pass required env vars/API keys in compose; mount ./data as a volume so SQLite persists.
+- Decide on GPU path: keep CPU-only faster-whisper or add a CUDA image + GPU passthrough for speed.
+- Developer flow: keep nginx container for prod builds; use npm run dev on host for HMR and fast UI work.
+- Networking assumptions: avoid hard localhost references from containers; ensure any host services are reachable via exposed ports/host.docker.internal on macOS/Windows.
+- OS deps audit: confirm no macOS-specific libs/frameworks are required; ensure all needed system packages are installed in the images.

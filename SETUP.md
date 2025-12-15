@@ -45,8 +45,64 @@ lab-assistant-ai/
     ├── test_stt.py
     └── test_parser.py
 ```
+## Setup instructions - Alpha users (Docker)
 
-## Setup Instructions
+### Windows:
+
+1. Unzip folder
+2. Right-click → “Run with PowerShell” on run_all.ps1
+!! If that doesn't work, enable double click -
+- Open PowerShell
+- run: Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+- Type Y and press Enter
+
+
+### MacOS
+
+1. Unzip folder
+2. Open Terminal
+3. Run:
+cd "<PATH_TO_THE_FOLDER>"
+chmod +x run.command
+4. Double click on run.command
+
+
+### With Docker - current code breaks with mic
+- Windows
+1. Go to Windows PowerShell and run:
+winget install -e --id Docker.DockerDesktop
+
+2. Restart windows
+
+3. Unzip folder. 
+
+4. Copy the path to the file
+
+5. Go to Windows PowerShell and run (Replace <PATH TO FOLDER> with the path u copied in step 4!):
+cd <PATH TO FOLDER>
+docker compose up --build
+
+6. On your browser, go to:
+http://localhost:5173
+
+
+- Mac
+1. Unzip folder
+
+2. Copy the path to the file
+
+3. Go to terminal and run (Replace <PATH TO FOLDER> with the path u copied in step 4!):
+cd <PATH TO FOLDER>
+brew install docker docker-compose colima
+colima start
+docker compose up --build
+
+4. On your browser, go to:
+http://localhost:5173
+
+
+
+## Setup Instructions - Developers
 
 1. **Install dependencies:**
    ```bash
@@ -70,25 +126,15 @@ lab-assistant-ai/
    cd ui && npm run dev # frontend (run from root)
    ``` 
 
-## Current Status
+### Prep to send:
+zip -r lab_jarvis.zip labJ \
+  -x 'labJ/.git/*' 'labJ/.DS_Store' 'labJ/**/.DS_Store' \
+  -x 'labJ/.vlab/*' 'labJ/.venv/*' \
+  -x 'labJ/**/__pycache__/*' 'labJ/.pytest_cache/*' 'labJ/.mypy_cache/*' 'labJ/.ruff_cache/*' \
+  -x 'labJ/node_modules/*' 'labJ/ui/node_modules/*' \
+  -x 'labJ/dist/*' 'labJ/ui/dist/*'
 
-This is a placeholder implementation with:
-- ✅ Complete project structure
-- ✅ Configuration management
-- ✅ Placeholder classes and functions
-- ✅ TODO comments for implementation
-- ⚠️ Core functionality needs to be implemented
 
-## Next Steps
-
-1. Implement audio capture in `audio/mic_stream.py`
-2. Implement STT transcription in `stt/transcriber.py`
-3. Implement intent parsing in `nlp/parser.py`
-4. Implement LLM integration in `nlp/agent.py`
-5. Implement chart generation in `visualization/chart_generator.py`
-6. Implement table building in `visualization/table_builder.py`
-7. Implement UI display in `ui/display.py`
-8. Implement main processing loop in `main.py`
 
 ## Notes
 

@@ -1,0 +1,52 @@
+.git
+.gitignore
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+node_modules/
+ui/node_modules/
+ui/dist/
+dist/
+build/
+*.tsbuildinfo
+
+*.log
+*.sqlite-wal
+*.sqlite-shm
+*.DS_Store
+.vscode/
+.idea/
+
+# Bytecode / caches inside ui
+ui/**/*.map
+
+# Docker artifacts
+Dockerfile.*~
+.dockerignore~
+
+# Cursor / IDE metadata
+.cursor
+.vlab
+
+# Workspace/project meta
+labJ.code-workspace
+
+# Local storage not needed for builds
+storage/
+
+# Test suite
+tests/
+
+# pytest cache folder (you have .pytest_cache but not this form)
+pytest_cache/

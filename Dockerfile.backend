@@ -1,0 +1,28 @@
+# Start from slim Python
+FROM python:3.11-slim
+
+# Prevent Python from writing .pyc and using stdout buffering
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Install system deps (sounddevice needs PortAudio + libsndfile)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    portaudio19-dev \
+    libsndfile1 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python deps first for caching
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the app
+COPY . .
+
+# Expose API port
+EXPOSE 8000
+
+# Run uvicorn
+CMD ["uvicorn", "agents.controller:app", "--host", "0.0.0.0", "--port", "8000"]

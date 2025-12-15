@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../tmp"
+		},
+		{
+			"path": "../gpu_opt"
+		}
+	],
+	"settings": {
+		"chatgpt.commentCodeLensEnabled": false
+	}
+}
