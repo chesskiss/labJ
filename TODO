@@ -1,15 +1,19 @@
 # Now
-! Clean code + Add missing 10 points from setup (vib). E.g. https://github.com/features/actions 
+! Clean code (UI, and backend) ✅X
++ Add missing 10 points from setup (vib)  !!
++ see: https://12factor.net/ 
 
 ! Add tests - backend + frontend. Ask GPT why so many files were changed first then send prompt:
 1. Read GPT's answer
 
+! STT groq (cheap) or gpt o mini transcribe  + small wisper model to detect any text (save tokens)
+
+! Add MCP for the LLM prompt at the side, and perhaps for the calculator and to execute other tools; default - no tool exist, send req to developers
+https://modelcontextprotocol.io/docs/develop/build-server
+-> for each pending tool, e.g. calulator, graph, add a place-holder function that just opens a window, and integrates the value from that window.
+
 ! Add a button/ marker that he's listening - improve UI with mic, etc.
 
-! STT 
-
-! Add MCP for the LLM prompt at the side, and perhaps for the calculator and to execute other tools
-https://modelcontextprotocol.io/docs/develop/build-server
 
 ! Add calulator, + for units (mcl etc.)
 and put it in a seperate space/window so it won't put into the diary (like a note)

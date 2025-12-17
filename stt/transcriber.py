@@ -5,7 +5,6 @@
 - Keeps `main` and controller API unchanged: `text, action = transcriber.transcribe(chunk, sr)`.
 - Handles short streaming chunks by buffering internally and only calling Whisper
   when enough audio has accumulated.
-- All tunable parameters are read from `env_config.py`.
 """
 
 from typing import Tuple, Optional
@@ -13,15 +12,16 @@ from typing import Tuple, Optional
 import numpy as np
 from faster_whisper import WhisperModel
 
-from env_config import (
+from stt.trigger import TriggerEvaluator
+from config import (
     STT_SAMPLE_RATE,
     STT_MODEL_SIZE,
     STT_WINDOW_SEC,
     STT_OVERLAP_SEC,
     STT_MIN_WINDOW_RMS,
     STT_MIN_TEXT_CHARS,
+    STT_DURATION,
 )
-from stt.trigger import TriggerEvaluator
 
 
 class Transcriber:
@@ -158,7 +158,6 @@ if __name__ == "__main__":
     Uses the same buffering logic but records one long clip instead of streaming.
     """
     import sounddevice as sd
-    from env_config import STT_DURATION
 
     sample_rate = STT_SAMPLE_RATE
     duration = STT_DURATION

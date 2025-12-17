@@ -4,8 +4,10 @@ __pycache__/
 
 # Virtual environments
 venv/
-.env/
 .vlab/
+.env
+.env.local
+.env.*.local
 
 # IDE files
 .idea/
@@ -22,7 +24,10 @@ ui/.vite/
 # Misc
 data/
 data/journal.sqlite
+*.egg-info/
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .cursor/rules/snyk_rules.mdc
+
+
 labJ.code-workspace

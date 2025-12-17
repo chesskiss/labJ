@@ -5,8 +5,8 @@ import sqlite3
 from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 
-from env_config import DB_PATH
 from storage import TranscriptRepository
+from config import DB_PATH
 
 
 ISO_FORMAT = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -22,7 +22,7 @@ class SQLiteTranscriptRepository(TranscriptRepository):
     """
     SQLite-based implementation of TranscriptRepository.
 
-    - Uses a single .sqlite file (path from env_config.DB_PATH).
+    - Uses a single .sqlite file.
     - Initializes schema on first use.
     - safe for simple, single-process usage.
     """

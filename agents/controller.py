@@ -10,6 +10,7 @@ import logging
 from .db import SessionLocal, init_db
 from .models import Session, Utterance, Action
 from sqlalchemy import or_
+from config import STT_MODEL_SIZE, STT_SAMPLE_RATE, CHUNK_SIZE
 
 # ------- Logger -------
 logging.basicConfig(level=logging.INFO)
@@ -18,12 +19,6 @@ logger = logging.getLogger("labj")
 import threading
 from stt.transcriber import Transcriber
 from audio.mic_stream import MicrophoneStream
-
-from env_config import (
-    STT_SAMPLE_RATE,
-    STT_MODEL_SIZE,
-    CHUNK_SIZE,
-)
 
 
 app = FastAPI()

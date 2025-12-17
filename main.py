@@ -1,17 +1,19 @@
+"""
+Main entry point for the voice-activated AI lab assistant.
+
+This module orchestrates the flow of audio capture, speech-to-text transcription,
+natural language processing, and visualization generation.
+"""
 from agents.controller import main
 import asyncio
+import config
 
 if __name__ == "__main__":
     asyncio.run(main())
 
 
 
-# """
-# Main entry point for the voice-activated AI lab assistant.
 
-# This module orchestrates the flow of audio capture, speech-to-text transcription,
-# natural language processing, and visualization generation.
-# """
 # import asyncio
 # import logging
 # from pathlib import Path

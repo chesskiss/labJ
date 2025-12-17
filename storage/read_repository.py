@@ -4,8 +4,7 @@ import sqlite3
 from dataclasses import dataclass
 from datetime import datetime
 from typing import List, Optional
-
-from env_config import DB_PATH
+from config import DB_PATH
 
 
 @dataclass

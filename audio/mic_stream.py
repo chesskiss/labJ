@@ -1,10 +1,8 @@
 """
 Microphone stream handler for real-time audio capture.
 
-This module provides functionality to capture audio from the microphone
-in real-time using sounddevice, with support for streaming and buffering.
+Provides real-time microphone streaming using sounddevice with chunked buffering.
 """
-from env_config import CHUNK_SIZE, STT_SAMPLE_RATE
 
 import asyncio
 import logging
@@ -12,6 +10,8 @@ import queue
 import numpy as np
 from typing import AsyncIterator, Optional, Callable
 import sounddevice as sd
+from config import STT_SAMPLE_RATE, CHUNK_SIZE
+
 
 logger = logging.getLogger(__name__)
 
@@ -198,4 +198,3 @@ class MicrophoneStream:
     # def get_audio_level(self, audio_chunk: np.ndarray) -> float:
     #     """Get the RMS level of audio chunk."""
     #     pass
-
