@@ -12,6 +12,7 @@ venv/
 # IDE files
 .idea/
 .vscode/
+.github/copilot-instructions.md
 
 # System files
 .DS_Store
@@ -25,6 +26,9 @@ ui/.vite/
 data/
 data/journal.sqlite
 *.egg-info/
+Lab Notebook Web App UI.zip
+ai-lab-journal - open source/
+
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .cursor/rules/snyk_rules.mdc

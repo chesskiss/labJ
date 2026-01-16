@@ -1,16 +1,22 @@
 # stt/transcriber.py
 
-"""Buffered Whisper transcriber.
+"""Buffered Whisper transcriber using Groq API.
 
 - Keeps `main` and controller API unchanged: `text, action = transcriber.transcribe(chunk, sr)`.
 - Handles short streaming chunks by buffering internally and only calling Whisper
   when enough audio has accumulated.
+- Uses Groq's Whisper Large v3 Turbo API for transcription.
 """
 
 from typing import Tuple, Optional
+import os
+import tempfile
 
 import numpy as np
-from faster_whisper import WhisperModel
+import soundfile as sf
+
+# from faster_whisper import WhisperModel  # Replaced with Groq API
+from groq import Groq
 
 from stt.trigger import TriggerEvaluator
 from config import (
@@ -25,14 +31,15 @@ from config import (
 
 
 class Transcriber:
-    """Streaming transcriber with internal buffering.
+    """Streaming transcriber with internal buffering using Groq API.
 
     Public API:
         transcribe(audio_chunk: np.ndarray, sample_rate: int) -> tuple[str, Optional[str]]
     """
-    #TODO check if GPU available on windows, android, macos, ios, and choose int8_float16, float16, etc. Heavy whisper: large-v3
+
     def __init__(self, model_size: Optional[str] = "small", compute_type: str = "int8"):
         self.sample_rate: int = STT_SAMPLE_RATE
+        # model_size and compute_type kept for API compatibility but not used with Groq
         self.model_size: str = model_size or STT_MODEL_SIZE
 
         # Internal rolling buffer
@@ -48,17 +55,17 @@ class Transcriber:
         self._min_window_rms: float = float(STT_MIN_WINDOW_RMS)
         self._min_text_chars: int = int(STT_MIN_TEXT_CHARS)
 
-
         print(
-            f"[Transcriber] Init: model={self.model_size}, compute_type={compute_type}, "
+            f"[Transcriber] Init: Using Groq Whisper Large v3 Turbo API, "
             f"window={self._window_sec}s, overlap={self._overlap_sec}s"
         )
 
         try:
-            self.model = WhisperModel(self.model_size, compute_type=compute_type)
+            # Initialize Groq client instead of local WhisperModel
+            self.groq_client = Groq(api_key=os.getenv("LLM_API_KEY"))
             self.trigger = TriggerEvaluator()
         except Exception as e:  # pragma: no cover - fail fast on model issues
-            raise RuntimeError(f"Failed to load Whisper model '{self.model_size}': {e}")
+            raise RuntimeError(f"Failed to initialize Groq client: {e}")
 
     # ---------------------------------------------------------------------
     # Public API
@@ -98,8 +105,8 @@ class Transcriber:
         # Use the last `window` samples as the current context window
         window = self._buffer[-self._window_samples :]
 
-        window_rms = float(np.sqrt(np.mean(window ** 2))) if window.size > 0 else 0.0
-        
+        window_rms = float(np.sqrt(np.mean(window**2))) if window.size > 0 else 0.0
+
         if window_rms < self._min_window_rms:
             # Too quiet, treat as silence / background noise
             # Do NOT reset buffer; keep accumulating
@@ -109,30 +116,40 @@ class Transcriber:
             return "", None
 
         try:
-            segments, _ = self.model.transcribe(
-                window, 
-                language="en",  # avoid language detection
-                beam_size=1,           # 1 = fastest, higher = better but slower
-                best_of=1,
-                vad_filter=True,       # skip silence
-                word_timestamps=False, # cheaper
-            )
-            texts = [seg.text.strip() for seg in segments if seg.text.strip()]
-            result = " ".join(texts).strip()
+            # Save window audio to temporary WAV file for Groq API
+            with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as temp_audio:
+                temp_path = temp_audio.name
+                sf.write(temp_path, window, self.sample_rate)
+
+            # Call Groq Whisper API
+            with open(temp_path, "rb") as audio_file:
+                transcription = self.groq_client.audio.transcriptions.create(
+                    file=audio_file,
+                    model="whisper-large-v3-turbo",
+                    language="en",
+                    response_format="text",
+                )
+
+            # Clean up temp file
+            os.unlink(temp_path)
+
+            # Extract text result
+            result = transcription.strip() if isinstance(transcription, str) else ""
 
             print(f"[Transcriber] STT window result: {result!r}")
 
             if not result:
                 # Do not reset buffer; let it accumulate more audio
                 return "", None
-            
-            if len(result) < self._min_text_chars and not self.trigger.contains_any_keyword(result):
+
+            if len(
+                result
+            ) < self._min_text_chars and not self.trigger.contains_any_keyword(result):
                 # This is likely random "you / uh / hm" from noise.
                 # Let it pass through only if it's actually a command phrase.
                 # Optional debug:
                 # print(f"[Transcriber] Ignoring short non-command text: {result!r}")
                 return "", None
-
 
             # Trigger / command-control evaluation
             action = self.trigger.evaluate(result)
@@ -148,7 +165,7 @@ class Transcriber:
             return result, action
 
         except Exception as e:
-            print(f"[Transcriber] Error during Whisper transcription: {e}")
+            print(f"[Transcriber] Error during Groq API transcription: {e}")
             return "", None
 
 
@@ -167,7 +184,6 @@ if __name__ == "__main__":
         audio = sd.rec(
             int(duration * sample_rate),
             samplerate=sample_rate,
-            
             channels=1,
             dtype="float32",
         )

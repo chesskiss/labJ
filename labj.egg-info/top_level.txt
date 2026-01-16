@@ -1,8 +1,11 @@
 agents
+ai-lab-journal - open source
+archive
 audio
 data
+papers
 storage
 stt
 tests
 ui
-utilities
+utils

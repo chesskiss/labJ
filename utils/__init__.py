@@ -11,5 +11,4 @@ This module provides functionality for:
 # from .chart_generator import ChartGenerator
 # from .table_builder import TableBuilder
 
-__all__ = []  # TODO: Add exported classes/functions
-
+__all__: list[str] = []  # TODO: Add exported classes/functions

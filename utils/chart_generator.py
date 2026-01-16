@@ -7,9 +7,9 @@ using matplotlib, plotly, or other visualization libraries.
 
 import logging
 from pathlib import Path
-from typing import Dict, Any, Optional, List, Tuple
-import numpy as np
+from typing import Dict, Any, Optional, List
 import pandas as pd
+from nlp.parser import ChartType
 
 logger = logging.getLogger(__name__)
 
@@ -19,27 +19,25 @@ logger = logging.getLogger(__name__)
 # import plotly.express as px
 # import seaborn as sns
 
-from nlp.parser import ChartType
-
 
 class ChartGenerator:
     """
     Generator for creating charts from data and intent information.
-    
+
     This class supports multiple chart types and backends (matplotlib, plotly).
     """
-    
+
     def __init__(
         self,
         backend: str = "matplotlib",
         output_dir: Path = Path("data/charts"),
         output_format: str = "png",
         dpi: int = 300,
-        style: str = "seaborn"
+        style: str = "seaborn",
     ):
         """
         Initialize the chart generator.
-        
+
         Args:
             backend: Visualization backend ("matplotlib" or "plotly")
             output_dir: Directory to save generated charts
@@ -53,14 +51,14 @@ class ChartGenerator:
         self.output_format = output_format
         self.dpi = dpi
         self.style = style
-        
+
         # TODO: Initialize backend
         # if backend == "matplotlib":
         #     plt.style.use(style)
         # elif backend == "plotly":
         #     # Plotly doesn't need explicit initialization
         #     pass
-    
+
     async def generate_chart(
         self,
         chart_type: ChartType,
@@ -68,11 +66,11 @@ class ChartGenerator:
         title: Optional[str] = None,
         x_label: Optional[str] = None,
         y_label: Optional[str] = None,
-        save_path: Optional[Path] = None
+        save_path: Optional[Path] = None,
     ) -> Path:
         """
         Generate a chart from data and chart type.
-        
+
         Args:
             chart_type: Type of chart to generate
             data: Data dictionary with x, y, labels, etc.
@@ -80,10 +78,10 @@ class ChartGenerator:
             x_label: X-axis label
             y_label: Y-axis label
             save_path: Path to save the chart (optional)
-        
+
         Returns:
             Path to saved chart file
-        
+
         TODO: Implement chart generation for all chart types
         """
         if self.backend == "matplotlib":
@@ -96,7 +94,7 @@ class ChartGenerator:
             )
         else:
             raise ValueError(f"Unsupported backend: {self.backend}")
-    
+
     async def _generate_matplotlib_chart(
         self,
         chart_type: ChartType,
@@ -104,11 +102,11 @@ class ChartGenerator:
         title: Optional[str],
         x_label: Optional[str],
         y_label: Optional[str],
-        save_path: Optional[Path]
+        save_path: Optional[Path],
     ) -> Path:
         """
         Generate chart using matplotlib.
-        
+
         Args:
             chart_type: Type of chart
             data: Data dictionary
@@ -116,10 +114,10 @@ class ChartGenerator:
             x_label: X-axis label
             y_label: Y-axis label
             save_path: Path to save chart
-        
+
         Returns:
             Path to saved chart
-        
+
         TODO: Implement matplotlib chart generation
         """
         # TODO: Implement matplotlib chart generation
@@ -155,12 +153,14 @@ class ChartGenerator:
         # plt.close()
         #
         # return save_path
-        
+
         # Placeholder
         if save_path is None:
-            save_path = self.output_dir / f"chart_{chart_type.value}.{self.output_format}"
+            save_path = (
+                self.output_dir / f"chart_{chart_type.value}.{self.output_format}"
+            )
         return save_path
-    
+
     async def _generate_plotly_chart(
         self,
         chart_type: ChartType,
@@ -168,11 +168,11 @@ class ChartGenerator:
         title: Optional[str],
         x_label: Optional[str],
         y_label: Optional[str],
-        save_path: Optional[Path]
+        save_path: Optional[Path],
     ) -> Path:
         """
         Generate chart using plotly.
-        
+
         Args:
             chart_type: Type of chart
             data: Data dictionary
@@ -180,10 +180,10 @@ class ChartGenerator:
             x_label: X-axis label
             y_label: Y-axis label
             save_path: Path to save chart
-        
+
         Returns:
             Path to saved chart
-        
+
         TODO: Implement plotly chart generation
         """
         # TODO: Implement plotly chart generation
@@ -212,65 +212,61 @@ class ChartGenerator:
         #     fig.write_image(save_path)
         #
         # return save_path
-        
+
         # Placeholder
         if save_path is None:
-            save_path = self.output_dir / f"chart_{chart_type.value}.{self.output_format}"
+            save_path = (
+                self.output_dir / f"chart_{chart_type.value}.{self.output_format}"
+            )
         return save_path
-    
+
     def prepare_data_from_intent(self, intent: Any) -> Dict[str, Any]:
         """
         Prepare data dictionary from intent object.
-        
+
         Args:
             intent: Intent object with chart information
-        
+
         Returns:
             Data dictionary for chart generation
-        
+
         TODO: Implement data preparation from intent
         """
         # TODO: Extract and prepare data from intent
         # This should extract x, y, labels, values, etc. from the intent
         # and format them appropriately for chart generation
-        
-        data = {
-            "x": [],
-            "y": [],
-            "labels": [],
-            "values": []
-        }
-        
-        if hasattr(intent, 'data') and intent.data:
+
+        data: Dict[str, List[Any]] = {"x": [], "y": [], "labels": [], "values": []}
+
+        if hasattr(intent, "data") and intent.data:
             # TODO: Process intent.data into chart-ready format
             pass
-        
+
         return data
-    
+
     def generate_from_dataframe(
         self,
         df: pd.DataFrame,
         chart_type: ChartType,
         x_column: Optional[str] = None,
         y_columns: Optional[List[str]] = None,
-        title: Optional[str] = None
+        title: Optional[str] = None,
     ) -> Path:
         """
         Generate chart from pandas DataFrame.
-        
+
         Args:
             df: DataFrame with data
             chart_type: Type of chart to generate
             x_column: Name of column to use for x-axis
             y_columns: Names of columns to use for y-axis
             title: Chart title
-        
+
         Returns:
             Path to saved chart
-        
+
         TODO: Implement DataFrame-based chart generation
         """
         # TODO: Implement chart generation from DataFrame
         # This is useful when data is already in a structured format
-        pass
-
+        return self.output_dir / f"chart_{chart_type.value}.{self.output_format}"
