@@ -1,6 +1,6 @@
 """
 Configuration management for the lab assistant.
-Environment-backed settings loader 
+Environment-backed settings loader
 
 This module handles loading and managing configuration settings for audio,
 speech-to-text, NLP, visualization, and UI components.
@@ -8,7 +8,6 @@ speech-to-text, NLP, visualization, and UI components.
 
 import os
 from pathlib import Path
-from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -44,12 +43,27 @@ STT_DURATION: int = _int("STT_DURATION", 50)  # seconds, used in __main__ test
 CHUNK_SIZE: int = _int("CHUNK_SIZE", 4096)
 
 # Streaming STT tuning
-STT_WINDOW_SEC: float = _float("STT_WINDOW_SEC", 3.0)
-STT_OVERLAP_SEC: float = _float("STT_OVERLAP_SEC", 0.7)
+# Increased window to capture complete utterances (like ChatGPT voice mode)
+STT_WINDOW_SEC: float = _float(
+    "STT_WINDOW_SEC", 6.0
+)  # 6 seconds to capture full thoughts
+STT_OVERLAP_SEC: float = _float("STT_OVERLAP_SEC", 1.5)  # More overlap for continuity
 
 # Noise / text filters
-STT_MIN_WINDOW_RMS: float = _float("STT_MIN_WINDOW_RMS", 0.005)
-STT_MIN_TEXT_CHARS: int = _int("STT_MIN_TEXT_CHARS", 5)
+STT_MIN_WINDOW_RMS: float = _float(
+    "STT_MIN_WINDOW_RMS", 0.01
+)  # Higher threshold to ignore quiet noise
+STT_MIN_TEXT_CHARS: int = _int(
+    "STT_MIN_TEXT_CHARS", 15
+)  # Require at least 15 chars (complete sentence)
+STT_SILENCE_THRESHOLD: float = _float(
+    "STT_SILENCE_THRESHOLD", 1.0
+)  # 1 second of silence before processing
+
+# LLM Context Layer Configuration
+CONTEXT_ENABLED: bool = os.getenv("CONTEXT_ENABLED", "true").lower() == "true"
+CONTEXT_LLM_MODEL: str = os.getenv("CONTEXT_LLM_MODEL", "llama-3.3-70b-versatile")
+CONTEXT_LLM_TEMPERATURE: float = _float("CONTEXT_LLM_TEMPERATURE", 0.3)
 
 # Data paths
 DATA_DIR: Path = _path("DATA_DIR", BASE_DIR / "data")
@@ -60,7 +74,6 @@ DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 # Legacy compatibility: expose ROOT similar to old env_config
 ROOT: Path = BASE_DIR
-
 
 
 # import os
@@ -77,7 +90,7 @@ ROOT: Path = BASE_DIR
 #     chunk_size: int = 4096
 #     device: Optional[int] = None  # None for default device
 #     dtype: str = "float32"
-    
+
 #     # TODO: Add audio preprocessing options
 #     # noise_reduction: bool = False
 #     # gain: float = 1.0
@@ -92,7 +105,7 @@ ROOT: Path = BASE_DIR
 #     language: Optional[str] = None  # None for auto-detect
 #     device: str = "cpu"  # cpu or cuda
 #     compute_type: str = "int8"  # float16, int8, int8_float16
-    
+
 #     # TODO: Add Vosk-specific config
 #     # vosk_model_path: Optional[str] = None
 
@@ -105,7 +118,7 @@ ROOT: Path = BASE_DIR
 #     api_key: Optional[str] = None
 #     temperature: float = 0.7
 #     max_tokens: int = 1000
-    
+
 #     # TODO: Add local LLM config
 #     # local_model_path: Optional[str] = None
 #     # use_gpu: bool = False
@@ -120,7 +133,7 @@ ROOT: Path = BASE_DIR
 #     output_dir: Path = field(default_factory=lambda: Path("data/charts"))
 #     dpi: int = 300
 #     style: str = "seaborn"  # matplotlib style
-    
+
 #     # TODO: Add chart customization options
 #     # default_colors: List[str] = None
 #     # figure_size: Tuple[int, int] = (10, 6)
@@ -134,7 +147,7 @@ ROOT: Path = BASE_DIR
 #     streamlit_host: str = "localhost"
 #     show_audio_levels: bool = True
 #     show_transcription: bool = True
-    
+
 #     # TODO: Add terminal UI config
 #     # terminal_width: int = 80
 #     # use_colors: bool = True
@@ -148,53 +161,52 @@ ROOT: Path = BASE_DIR
 #     nlp: NLPConfig = field(default_factory=NLPConfig)
 #     visualization: VisualizationConfig = field(default_factory=VisualizationConfig)
 #     ui: UIConfig = field(default_factory=UIConfig)
-    
+
 #     # Data directories
 #     data_dir: Path = field(default_factory=lambda: Path("data"))
 #     logs_dir: Path = field(default_factory=lambda: Path("data/logs"))
 #     charts_dir: Path = field(default_factory=lambda: Path("data/charts"))
 #     experiments_dir: Path = field(default_factory=lambda: Path("data/experiments"))
-    
+
 #     def __post_init__(self):
 #         """Initialize configuration and load from environment."""
 #         # Load API keys from environment
 #         self.nlp.api_key = os.getenv("OPENAI_API_KEY", self.nlp.api_key)
-        
+
 #         # Create data directories
 #         self.data_dir.mkdir(exist_ok=True)
 #         self.logs_dir.mkdir(parents=True, exist_ok=True)
 #         self.charts_dir.mkdir(parents=True, exist_ok=True)
 #         self.experiments_dir.mkdir(parents=True, exist_ok=True)
-        
+
 #         # Set STT model path if not specified
 #         if self.stt.model_path is None:
 #             # TODO: Set default model path based on model_type and model_size
 #             pass
-        
+
 #         # TODO: Load configuration from YAML file if exists
 #         # self.load_from_yaml("config.yaml")
-    
+
 #     def load_from_yaml(self, yaml_path: str):
 #         """
 #         Load configuration from a YAML file.
-        
+
 #         Args:
 #             yaml_path: Path to YAML configuration file
-        
+
 #         TODO: Implement YAML configuration loading
 #         """
 #         # TODO: Implement YAML loading
 #         pass
-    
+
 #     def save_to_yaml(self, yaml_path: str):
 #         """
 #         Save current configuration to a YAML file.
-        
+
 #         Args:
 #             yaml_path: Path to save YAML configuration file
-        
+
 #         TODO: Implement YAML configuration saving
 #         """
 #         # TODO: Implement YAML saving
 #         pass
-

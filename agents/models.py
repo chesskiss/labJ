@@ -1,5 +1,5 @@
 # agents/models.py
-from sqlalchemy import Column, Integer, Text, String
+from sqlalchemy import Column, Integer, Text
 from .db import Base
 
 
@@ -14,6 +14,7 @@ class Session(Base):
     metadata    TEXT NULL
     created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     """
+
     __tablename__ = "sessions"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -38,7 +39,9 @@ class Utterance(Base):
     text           TEXT NOT NULL
     source         TEXT NOT NULL DEFAULT 'stt'
     created_at     TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    metadata       TEXT NULL  (stores raw_text, intent, LLM processing info as JSON)
     """
+
     __tablename__ = "utterances"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
@@ -49,6 +52,8 @@ class Utterance(Base):
     text = Column(Text, nullable=False)
     source = Column(Text, nullable=False)
     created_at = Column(Text, nullable=False)
+    # Metadata field for storing raw transcription and LLM processing info
+    metadata_json = Column("metadata", Text, nullable=True)
 
 
 class Action(Base):
@@ -62,6 +67,7 @@ class Action(Base):
     raw_text    TEXT NULL
     created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     """
+
     __tablename__ = "actions"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)

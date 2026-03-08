@@ -8,7 +8,7 @@ export interface SessionSummary {
   }
   
   // Notebook block types – what the center editor renders
-  export type BlockType = "paragraph" | "chart" | "graph" | "table";
+  export type BlockType = "paragraph" | "chart" | "graph" | "table" | "log";
   
   export interface BlockContent {
     text?: string;
@@ -40,4 +40,43 @@ export interface SessionSummary {
       title?: string;
     };
   }
-  
+
+  // Sub-window types
+  export type SubWindowType = "note" | "calculator";
+
+  export interface Position {
+    x: number;
+    y: number;
+  }
+
+  export interface Size {
+    width: number;
+    height: number;
+  }
+
+  export interface SubWindow {
+    id: string;
+    type: SubWindowType;
+    title: string;
+    content: string;
+    position: Position;
+    size: Size;
+  }
+
+  // Calculator-specific types
+  export interface CalculatorEntry {
+    id: string;
+    expression: string;
+    result: string | number;
+    timestamp: string;
+    error?: string;
+  }
+
+  export interface CalculatorState {
+    history: CalculatorEntry[];
+    currentExpression: string;
+    settings?: {
+      angleUnit: 'deg' | 'rad';
+      precision: number;
+    };
+  }

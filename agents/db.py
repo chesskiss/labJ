@@ -18,6 +18,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 class Base(DeclarativeBase):
     """Base class for declarative models."""
+
     pass
 
 
@@ -26,7 +27,7 @@ def init_db():
     This will not drop or change existing tables.
     It just ensures our ORM models are registered.
     """
-    from . import models  # noqa: F401
+    import agents.models  # noqa: F401
     # We don't call Base.metadata.create_all here because your schema already exists.
     # If you WANT SQLAlchemy to create missing tables, you could uncomment:
     # Base.metadata.create_all(bind=engine)

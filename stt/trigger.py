@@ -1,5 +1,6 @@
 # stt/trigger.py
 
+
 class TriggerEvaluator:
     """
     Evaluates transcribed text for control triggers.
@@ -33,14 +34,26 @@ class TriggerEvaluator:
             "begin new session",
             "create new session",
         }
-
+        self.create_note_keywords = {
+            "create note",
+            "new note",
+            "sticky note",
+            "make a note",
+            "open note",
+        }
+        self.create_calculator_keywords = {
+            "calculator",
+            "open calculator",
+            "calc",
+            "calculate",
+        }
 
     def evaluate(self, text):
         """
         Check the text for any control triggers.
 
         Returns:
-            str or None: Action keyword like "pause_transcription", "resume_transcription", "stop_listening" or None
+            str or None: Action keyword like "pause_transcription", "resume_transcription", "stop_listening", "create_note", "create_calculator" or None
         """
         lowered = text.lower()
 
@@ -48,6 +61,10 @@ class TriggerEvaluator:
             return "stop_listening"
         elif any(kw in lowered for kw in self.new_session_keywords):
             return "new_session"
+        elif any(kw in lowered for kw in self.create_note_keywords):
+            return "create_note"
+        elif any(kw in lowered for kw in self.create_calculator_keywords):
+            return "create_calculator"
         elif any(kw in lowered for kw in self.start_transcription_keywords):
             return "resume_transcription"
         elif any(kw in lowered for kw in self.stop_transcription_keywords):
@@ -55,7 +72,6 @@ class TriggerEvaluator:
         else:
             return None
 
-    
     def contains_any_keyword(self, text: str) -> bool:
         """Return True if text contains any known trigger keyword."""
         lowered = text.lower()
@@ -64,5 +80,7 @@ class TriggerEvaluator:
             | self.start_transcription_keywords
             | self.stop_listening_keywords
             | self.new_session_keywords
+            | self.create_note_keywords
+            | self.create_calculator_keywords
         )
         return any(kw in lowered for kw in all_keywords)

@@ -1,11 +1,6 @@
-"""
-Speech-to-text (STT) module for transcribing audio to text.
+"""STT package exports for controller-facing integrations."""
 
-Includes:
-- FasterWhisper-based local transcription
-- Extensible base class for other engines (e.g., Vosk, API)
-"""
+from .context import ContextProcessor
+from .trigger import TriggerEvaluator
 
-from .transcriber import Transcriber
-
-__all__ = ["Transcriber"] #TODO add - ["VoskTranscriber", "StreamTranscriber"]
+__all__ = ["ContextProcessor", "TriggerEvaluator"]

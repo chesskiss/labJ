@@ -6,19 +6,37 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 import json
 import logging
+import os
+from importlib.util import module_from_spec, spec_from_file_location
+from pathlib import Path
+from typing import Protocol, cast
 
 from .db import SessionLocal, init_db
-from .models import Session, Utterance, Action
+from .models import Session, Utterance
 from sqlalchemy import or_
-from config import STT_MODEL_SIZE, STT_SAMPLE_RATE, CHUNK_SIZE
+from stt.context import ContextProcessor
+from stt.trigger import TriggerEvaluator
 
 # ------- Logger -------
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("labj")
 
-import threading
-from stt.transcriber import Transcriber
-from audio.mic_stream import MicrophoneStream
+# Load STTClient from stt/STT-module/stt.py without shadowing the stt package.
+_STT_MODULE_PATH = (
+    Path(__file__).resolve().parent.parent / "stt" / "STT-module" / "stt.py"
+)
+_STT_SPEC = spec_from_file_location("stt_module_client", _STT_MODULE_PATH)
+if _STT_SPEC is None or _STT_SPEC.loader is None:
+    raise ImportError(f"Cannot load STT module from {_STT_MODULE_PATH}")
+_stt_module = module_from_spec(_STT_SPEC)
+_STT_SPEC.loader.exec_module(_stt_module)
+STTClient = _stt_module.STTClient
+
+
+class STTClientLike(Protocol):
+    def start(self) -> None: ...
+
+    def stop(self) -> str: ...
 
 
 app = FastAPI()
@@ -38,13 +56,22 @@ init_db()
 SessionData = Dict[str, Any]
 SESSION_CACHE: Dict[int, SessionData] = {}  # key = session_id (int)
 
+# ---------- Sub-windows cache ----------
+SubWindowData = Dict[str, Any]
+SUBWINDOW_CACHE: Dict[str, SubWindowData] = {}  # key = window_id (str)
+SUBWINDOW_COUNTER = 0
+
 # ---------- STT globals ----------
-transcriber = Transcriber(model_size=STT_MODEL_SIZE, compute_type="int8")
-STT_THREAD_STARTED = False
 # Track listening + whether we should append text while still listening.
 STT_STATE = {"listening": True, "transcribing": True}
 # Track current STT target session
 CURRENT_SESSION_ID: Optional[int] = None
+# STT client instance (initialized on startup)
+stt_client: Optional[STTClientLike] = None
+# Context processor for MCP command extraction
+context_processor: Optional[ContextProcessor] = None
+# Keyword trigger fallback when LLM tool-calling does not return commands
+trigger_evaluator = TriggerEvaluator()
 
 
 def now_iso() -> str:
@@ -143,9 +170,17 @@ def create_session_in_db(title: str) -> int:
         db.close()
 
 
-def append_utterance_in_db(session_id: int, text: str, source: str = "manual") -> Utterance:
+def append_utterance_in_db(
+    session_id: int, text: str, source: str = "manual", metadata: Optional[str] = None
+) -> Utterance:
     """
     Insert a new utterance row for the given session.
+
+    Args:
+        session_id: ID of the session
+        text: Utterance text (enhanced text if processed by LLM)
+        source: Source of utterance ("stt", "manual", "calculator", etc.)
+        metadata: Optional JSON string with raw_text, intent, LLM processing info
     """
     db = SessionLocal()
     try:
@@ -167,6 +202,7 @@ def append_utterance_in_db(session_id: int, text: str, source: str = "manual") -
             text=text,
             source=source,
             created_at=t,
+            metadata_json=metadata,
         )
         db.add(u)
         db.commit()
@@ -204,7 +240,7 @@ def ensure_live_session_id() -> int:
 
     if last_db_session and last_db_session.id in SESSION_CACHE:
         CURRENT_SESSION_ID = last_db_session.id
-        return CURRENT_SESSION_ID
+        return last_db_session.id
 
     if SESSION_CACHE:
         CURRENT_SESSION_ID = sorted(SESSION_CACHE.keys())[-1]
@@ -225,17 +261,35 @@ def ensure_live_session_id() -> int:
     CURRENT_SESSION_ID = session_id
     return session_id
 
-def handle_stt_text(text: str):
+
+def handle_stt_text(enhanced_text: str, context_result: Dict[str, Any]):
     """
     Called by STT worker whenever a chunk of text is ready.
-    Writes to DB + updates RAM cache + adds log block.
+    Writes enhanced text to DB + updates RAM cache + adds log block.
+    Preserves raw transcription in metadata.
+
+    Args:
+        enhanced_text: LLM-enhanced text (grammar corrected, filler removed)
+        context_result: Full context processing result with raw_text, intent, etc.
     """
-    text = text.strip()
-    if not text:
+    enhanced_text = enhanced_text.strip()
+    if not enhanced_text:
         return
 
     session_id = ensure_live_session_id()
-    u = append_utterance_in_db(session_id, text, source="stt")
+
+    # Build metadata JSON with raw text and processing info
+    metadata = {
+        "raw_text": context_result.get("raw_text", enhanced_text),
+        "intent": context_result.get("intent", "journal"),
+        "processed": context_result.get("metadata", {}).get("processed", False),
+        "model": context_result.get("metadata", {}).get("model", "none"),
+        "timestamp": context_result.get("metadata", {}).get("timestamp", now_iso()),
+    }
+
+    u = append_utterance_in_db(
+        session_id, enhanced_text, source="stt", metadata=json.dumps(metadata)
+    )
 
     blocks = SESSION_CACHE[session_id].setdefault("blocks", [])
     blocks.append(
@@ -250,116 +304,222 @@ def handle_stt_text(text: str):
             },
         }
     )
-    add_log_block(f"STT → session {session_id}: {text[:80] + '…' if len(text) > 80 else text}")
-    logger.info("STT text appended to session_id=%s utterance_id=%s", session_id, u.id)
+    add_log_block(
+        f"STT → session {session_id}: {enhanced_text[:80] + '…' if len(enhanced_text) > 80 else enhanced_text}"
+    )
+    logger.info(
+        "STT text appended to session_id=%s utterance_id=%s (raw=%s)",
+        session_id,
+        u.id,
+        context_result.get("raw_text", "")[:50],
+    )
 
 
-def handle_stt_action(action: str, stream: Optional[MicrophoneStream] = None) -> None:
+def handle_stt_commands(commands: List[Dict[str, Any]]) -> None:
     """
-    React to control phrases detected by the Transcriber.
-    """
-    global STT_STATE, CURRENT_SESSION_ID
+    Execute MCP tool calls extracted by LLM context processor.
 
-    if action == "pause_transcription":
-        STT_STATE["transcribing"] = False
-        add_log_block("STT command: pause transcription")
-        logger.info("STT paused by voice command")
-    elif action == "resume_transcription":
-        STT_STATE["transcribing"] = True
-        add_log_block("STT command: resume transcription")
-        logger.info("STT resumed by voice command")
-    elif action == "stop_listening":
-        STT_STATE["listening"] = False
-        add_log_block("STT command: stop listening")
-        logger.info("STT stop_listening triggered – shutting down mic stream")
-        if stream:
-            try:
-                stream.stop()
-            except Exception:
-                logger.exception("Error stopping microphone stream after stop_listening")
-    elif action == "new_session":
-        title = f"Live Session {now_iso()}"
-        session_id = create_session_in_db(title)
-        SESSION_CACHE[session_id] = {
-          "id": session_id,
-          "title": title,
-          "description": "",
-          "isFavorite": False,
-          "isArchived": False,
-          "blocks": [],
+    Args:
+        commands: List of command dicts with 'name' and 'arguments'
+    """
+    global STT_STATE, CURRENT_SESSION_ID, SUBWINDOW_CACHE, SUBWINDOW_COUNTER, stt_client
+
+    for cmd in commands:
+        name = cmd.get("name", "")
+        args = cmd.get("arguments", {})
+
+        if name == "pause_transcription":
+            STT_STATE["transcribing"] = False
+            add_log_block("LLM command: pause transcription")
+            logger.info("Transcription paused by LLM command")
+
+        elif name == "resume_transcription":
+            STT_STATE["transcribing"] = True
+            add_log_block("LLM command: resume transcription")
+            logger.info("Transcription resumed by LLM command")
+
+        elif name == "stop_listening":
+            STT_STATE["listening"] = False
+            add_log_block("LLM command: stop listening")
+            logger.info("Stop listening triggered by LLM – shutting down STT client")
+            if stt_client:
+                try:
+                    stt_client.stop()
+                except Exception:
+                    logger.exception("Error stopping STT client after stop_listening")
+
+        elif name == "new_session":
+            title = args.get("title", "").strip() or f"Live Session {now_iso()}"
+            session_id = create_session_in_db(title)
+            SESSION_CACHE[session_id] = {
+                "id": session_id,
+                "title": title,
+                "description": "",
+                "isFavorite": False,
+                "isArchived": False,
+                "blocks": [],
+            }
+            CURRENT_SESSION_ID = session_id
+            add_log_block(f"LLM command: started new session {session_id} - {title}")
+            logger.info("New session created by LLM id=%s title=%s", session_id, title)
+
+        elif name == "create_note":
+            SUBWINDOW_COUNTER += 1
+            window_id = f"note-{SUBWINDOW_COUNTER}"
+            initial_content = args.get("initial_content", "")
+            SUBWINDOW_CACHE[window_id] = {
+                "id": window_id,
+                "type": "note",
+                "title": f"Note {SUBWINDOW_COUNTER}",
+                "content": initial_content,
+                "position": {
+                    "x": 100 + (SUBWINDOW_COUNTER * 30),
+                    "y": 100 + (SUBWINDOW_COUNTER * 30),
+                },
+                "size": {"width": 300, "height": 200},
+            }
+            add_log_block(f"LLM command: created note window {window_id}")
+            logger.info("Note window created by LLM id=%s", window_id)
+
+        elif name == "create_calculator":
+            SUBWINDOW_COUNTER += 1
+            window_id = f"calc-{SUBWINDOW_COUNTER}"
+
+            # Extract initial expression from LLM args
+            initial_expr = args.get("initial_expression", "")
+            initial_state = {"currentExpression": initial_expr, "history": []}
+
+            SUBWINDOW_CACHE[window_id] = {
+                "id": window_id,
+                "type": "calculator",
+                "title": f"Calculator {SUBWINDOW_COUNTER}",
+                "content": json.dumps(initial_state),
+                "position": {
+                    "x": 150 + (SUBWINDOW_COUNTER * 30),
+                    "y": 150 + (SUBWINDOW_COUNTER * 30),
+                },
+                "size": {"width": 400, "height": 500},
+            }
+            add_log_block(
+                f"LLM command: created calculator window {window_id} with expr={initial_expr!r}"
+            )
+            logger.info(
+                "Calculator window created by LLM id=%s expr=%s",
+                window_id,
+                initial_expr,
+            )
+
+
+def on_transcription_callback(text: str) -> None:
+    """
+    Callback fired by STTClient after each pause in speech.
+    Processes the raw transcription through ContextProcessor for MCP commands
+    and journal text enhancement.
+    """
+    global context_processor
+
+    if not text or not text.strip():
+        return
+
+    raw_text = text.strip()
+    logger.info("STT received: %s", raw_text[:80])
+
+    # Process through ContextProcessor for intent detection and command extraction
+    if context_processor:
+        context_result = context_processor.process(raw_text)
+    else:
+        # Fallback if context processor not initialized
+        context_result = {
+            "enhanced_text": raw_text,
+            "raw_text": raw_text,
+            "commands": [],
+            "intent": "journal",
+            "metadata": {"processed": False},
         }
-        CURRENT_SESSION_ID = session_id
-        add_log_block(f"STT command: started new session {session_id}")
-        logger.info("STT new session created id=%s", session_id)
 
-def stt_worker():
-    """
-    Blocking STT loop running in a background thread.
-    Listens to microphone and calls handle_stt_text(text) for each chunk.
-    """
-    add_log_block("STT worker started")
-    logger.info("STT worker started")
+    # Fallback to deterministic keyword triggers if LLM returned no commands
+    commands = context_result.get("commands", [])
+    if not commands:
+        fallback_action = trigger_evaluator.evaluate(raw_text)
+        if fallback_action:
+            commands = [{"name": fallback_action, "arguments": {}}]
+            logger.info("Fallback trigger command: %s", fallback_action)
 
-    while STT_STATE["listening"]:
-        try:
-            with MicrophoneStream(sample_rate=STT_SAMPLE_RATE, chunk_size=CHUNK_SIZE) as stream:
-                while STT_STATE["listening"] and stream.is_streaming:
-                    chunk = stream.get_audio_chunk(timeout=0.5)
-                    if chunk is None:
-                        continue
+    # Handle any extracted MCP commands
+    if commands:
+        handle_stt_commands(commands)
 
-                    text, action = transcriber.transcribe(chunk, sample_rate=STT_SAMPLE_RATE)
-
-                    if action:
-                        handle_stt_action(action, stream)
-                        if not STT_STATE["listening"]:
-                            break
-
-                    if text and STT_STATE["transcribing"]:
-                        handle_stt_text(text)
-        except Exception as e:
-            logger.exception("STT worker error: %s", e)
-            add_log_block(f"STT worker error: {e!r}")
-            # small backoff to avoid tight crash loop
-            import time
-            time.sleep(2.0)
-
+    # Handle journal text if transcribing is enabled
+    enhanced_text = context_result.get("enhanced_text", "")
+    if enhanced_text and STT_STATE["transcribing"]:
+        handle_stt_text(enhanced_text, context_result)
 
 
 logger.info("Startup: SESSION_CACHE size = %d", len(SESSION_CACHE))
 add_log_block(f"Startup: cache has {len(SESSION_CACHE)} sessions")
 
 
-def start_stt_thread_once():
-    global STT_THREAD_STARTED
-    if STT_THREAD_STARTED:
+def start_stt_client():
+    """
+    Initialize and start the STT client with the new STT module.
+    """
+    global stt_client, context_processor, STT_STATE
+
+    if stt_client is not None:
+        logger.info("STT client already initialized")
         return
-    STT_THREAD_STARTED = True
-    t = threading.Thread(target=stt_worker, daemon=True)
-    t.start()
-    logger.info("STT background thread started")
+
+    # Initialize context processor for MCP command extraction
+    context_processor = ContextProcessor(enabled=True)
+
+    # Create and start STT client
+    stt_api_url = os.getenv("STT_API_URL", "http://localhost:8001/transcribe")
+    stt_client = cast(
+        STTClientLike,
+        STTClient(
+            on_transcription=on_transcription_callback,
+            language="en",
+            api_url=stt_api_url,
+        ),
+    )
+    stt_client.start()
+    STT_STATE["listening"] = True
+    STT_STATE["transcribing"] = True
+    logger.info("STT client started (api_url=%s)", stt_api_url)
 
 
 @app.on_event("startup")
 def on_startup():
     # DB/cache already initialized at import; you can keep or move them here if you prefer.
-    start_stt_thread_once()
-    add_log_block("on_startup: STT thread initialized")
-
+    start_stt_client()
+    add_log_block("on_startup: STT client initialized")
 
 
 # ---------- API models ----------
 class CommandRequest(BaseModel):
     text: str
 
+
 class UpdateSessionTitleRequest(BaseModel):
     title: str
+
 
 class CreateSessionRequest(BaseModel):
     title: Optional[str] = None
 
+
 class ArchiveSessionRequest(BaseModel):
     archived: bool = True
+
+
+class UpdateSubWindowRequest(BaseModel):
+    content: Optional[str] = None
+    position: Optional[Dict[str, int]] = None
+    size: Optional[Dict[str, int]] = None
+
+
+class CloseSubWindowRequest(BaseModel):
+    window_id: str
 
 
 # ---------- API endpoints ----------
@@ -496,7 +656,11 @@ def search_sessions(q: str):
     db = SessionLocal()
     pattern = f"%{query}%"
     try:
-        subq = db.query(Utterance.session_id).filter(Utterance.text.ilike(pattern)).subquery()
+        subq = (
+            db.query(Utterance.session_id)
+            .filter(Utterance.text.ilike(pattern))
+            .subquery()
+        )
         rows = (
             db.query(Session)
             .filter(
@@ -593,3 +757,49 @@ def parse_and_apply_command(text: str) -> Dict[str, Any]:
         }
     )
     return {"type": "CREATE_DEFAULT_SESSION", "session_id": session_id}
+
+
+# ---------- Sub-window endpoints ----------
+
+
+@app.get("/subwindows")
+def list_subwindows():
+    """
+    Get all active sub-windows.
+    """
+    return list(SUBWINDOW_CACHE.values())
+
+
+@app.post("/subwindows/{window_id}")
+def update_subwindow(window_id: str, req: UpdateSubWindowRequest):
+    """
+    Update a sub-window's content, position, or size.
+    """
+    if window_id not in SUBWINDOW_CACHE:
+        raise HTTPException(status_code=404, detail="Sub-window not found")
+
+    window = SUBWINDOW_CACHE[window_id]
+
+    if req.content is not None:
+        window["content"] = req.content
+    if req.position is not None:
+        window["position"] = req.position
+    if req.size is not None:
+        window["size"] = req.size
+
+    logger.info("Sub-window %s updated", window_id)
+    return {"status": "ok", "window": window}
+
+
+@app.delete("/subwindows/{window_id}")
+def close_subwindow(window_id: str):
+    """
+    Close/delete a sub-window.
+    """
+    if window_id not in SUBWINDOW_CACHE:
+        raise HTTPException(status_code=404, detail="Sub-window not found")
+
+    del SUBWINDOW_CACHE[window_id]
+    add_log_block(f"Sub-window {window_id} closed")
+    logger.info("Sub-window %s closed", window_id)
+    return {"status": "ok", "window_id": window_id}
