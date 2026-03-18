@@ -159,14 +159,26 @@ def _validate_action_plan(
             if isinstance(slot_val, int):
                 first_read_slot = slot_val
 
-    if plan.entities.calculator_slot is not None and first_read_slot is not None:
-        if plan.entities.calculator_slot != first_read_slot:
+    entity_slot: int | None = None
+    entity_slot_field = "entities.calculator_slot"
+    if (
+        plan.entities.source_kind == "calculator_slot"
+        and plan.entities.source_index is not None
+    ):
+        entity_slot = plan.entities.source_index
+        entity_slot_field = "entities.source_index"
+    elif plan.entities.calculator_slot is not None:
+        entity_slot = plan.entities.calculator_slot
+        entity_slot_field = "entities.calculator_slot"
+
+    if entity_slot is not None and first_read_slot is not None:
+        if entity_slot != first_read_slot:
             errors.append(
                 ValidationIssue(
                     code=ValidationCode.ENTITY_STEP_MISMATCH,
                     severity=IssueSeverity.ERROR,
-                    message="entities.calculator_slot conflicts with step slot",
-                    field="entities.calculator_slot",
+                    message="entity source slot conflicts with step slot",
+                    field=entity_slot_field,
                     step_id="s1",
                 )
             )

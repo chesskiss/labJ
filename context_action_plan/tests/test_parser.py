@@ -18,6 +18,9 @@ def test_transform_and_record_value_pipeline():
         ActionName.CONVERT_UNIT,
         ActionName.WRITE_JOURNAL_ENTRY,
     ]
+    assert result.entities.source_kind == "calculator_slot"
+    assert result.entities.source_index == 1
+    assert result.entities.source_ref == "calculator_1_latest"
     assert result.entities.calculator_slot == 1
     assert result.entities.source_unit == "L"
     assert result.entities.target_unit == "mL"
@@ -111,6 +114,9 @@ def test_divide_operation_from_slot():
 def test_slot_extraction():
     result = parse_transcript("read calculator 9 then add 2")
     assert isinstance(result, ActionPlan)
+    assert result.entities.source_kind == "calculator_slot"
+    assert result.entities.source_index == 9
+    assert result.entities.source_ref == "calculator_9_latest"
     assert result.entities.calculator_slot == 9
 
 

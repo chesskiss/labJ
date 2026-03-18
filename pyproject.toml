@@ -31,6 +31,7 @@ dependencies = [
   "soundfile>=0.13.1",
   "requests>=2.32.5",
   "python-multipart>=0.0.22",
+  "psycopg>=3.3.3",
 ]
 
 [project.optional-dependencies]
@@ -45,4 +46,5 @@ include = ["*"]
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
+    "types-requests>=2.32.4.20250913",
 ]

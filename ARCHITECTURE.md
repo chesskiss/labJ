@@ -4,12 +4,16 @@ This document describes the current runtime architecture and planned data/agent 
 
 ## Current Runtime (as implemented)
 
-LabJ currently runs as a two-service system:
+LabJ currently runs as modular stages plus STT service:
 
-1. `labJ` backend (`FastAPI`): orchestration, command handling, UI APIs, session/utterance persistence.
-2. `stt/STT-module` service (`FastAPI` in Docker): audio-to-text transcription (`/health`, `/transcribe`).
+1. `stt/STT-module` service (`FastAPI` in Docker): audio-to-text transcription (`/health`, `/transcribe`).
+2. `orchestration_api` (`FastAPI`): thin integration entrypoint (`/health`, `/process_text`, `/runtime_state`).
+3. `context_action_plan`: transcript -> structured parsed output.
+4. `plan_validation`: parsed output -> validated/non-executable classification.
+5. `executor_runtime`: validated plans over mocked/runtime tools.
+6. `db/` + `tools/`: first persistence slice (journal entries + events).
 
-The backend receives text from `STTClient`, routes it through an LLM context layer, applies fallback keyword triggers, executes actions, and persists session data for the UI.
+The previous unified backend (`agents/controller.py`) is archived under `archive/legacy/agents/`.
 
 ## Visual Architecture
 
@@ -18,20 +22,13 @@ flowchart LR
     U[User Speech] --> C[STTClient\nstt/STT-module/stt.py]
     C -->|POST /transcribe| S[STT API Service\nstt/STT-module/app.py]
     S -->|transcribed text| C
-    C -->|callback text| P[Context -> ActionPlan Parser\ncontext_action_plan/]
+    C -->|text input| O[Orchestration API\norchestration_api/app.py]
+    O -->|parse| P[Context -> ActionPlan Parser\ncontext_action_plan/]
     P --> V[Plan Validator + Registry\nplan_validation/]
     V --> E[Executor Runtime (mocked)\nexecutor_runtime/]
-    E -->|next stage| W[DB Writes / Repositories\nplanned]
-    C -->|current integration path| B[Backend Controller\nagents/controller.py]
-    B --> X[ContextProcessor\nstt/context.py]
-    X -->|tool calls| H[Command Handler\nhandle_stt_commands]
-    X -->|enhanced text| T[Utterance Writer\nhandle_stt_text]
-    B -->|fallback when no LLM commands| K[TriggerEvaluator\nstt/trigger.py]
-    H --> M[(SQLite data/journal.sqlite)]
-    T --> M
-    W --> M
-    B -->|/sessions /notebook /subwindows /commands| UI[React UI\nui/]
-    UI -->|polling + command posts| B
+    E --> D[DB Layer\n db/ + tools/]
+    D --> M[(SQLite now / Postgres target)]
+    UI[React UI\nui/] -.can post text to /process_text .- O
 ```
 
 ### Box Diagram (ASCII)
@@ -53,6 +50,12 @@ flowchart LR
 │ stt/STT-module/app.py        │
 └───────────────┬──────────────┘
                 │ transcribed text
+                v
+┌──────────────────────────────────────┐
+│ Orchestration API                    │
+│ orchestration_api/app.py             │
+└───────────────┬──────────────────────┘
+                │ process_text
                 v
 ┌──────────────────────────────────────┐
 │ Context -> ActionPlan Parser         │
@@ -82,20 +85,29 @@ flowchart LR
 
 1. User speaks into microphone.
 2. `STTClient` segments speech by silence and calls STT API `/transcribe`.
-3. Transcript is parsed into a structured `ParsedOutput` (`context_action_plan`).
-4. Parsed output is validated against tool contracts (`plan_validation`).
-5. `executor_runtime` executes validated plans against mocked tools/state.
-6. Next stage (planned): executor writes state/events to DB via repository layer.
-7. UI polls backend endpoints and renders notebook/session/subwindow state.
+3. Text is posted to `orchestration_api` `/process_text`.
+4. Transcript is parsed into a structured `ParsedOutput` (`context_action_plan`).
+5. Parsed output is validated against tool contracts (`plan_validation`).
+6. `executor_runtime` executes validated plans against mocked tools/state.
+7. `db/` and `tools/` provide persistence for first real write slice (`journal_entries`, `events`).
+8. Archived backend API path is retained in `archive/legacy/` for reference only.
 
 ## Repository Structure (Architecture-Relevant)
 
 ```text
 labJ/
-├── agents/
-│   ├── controller.py         # Main orchestration + API endpoints
-│   ├── db.py                 # SQLAlchemy engine/session setup
-│   └── models.py             # ORM models (sessions, utterances, actions)
+├── archive/
+│   └── legacy/
+│       ├── agents/           # Archived former backend runtime
+│       ├── ai-lab-journal - open source/
+│       └── papers/
+├── context_action_plan/      # Transcript -> ParsedOutput
+├── plan_validation/          # ParsedOutput -> ValidationResult
+├── executor_runtime/         # Validated execution runtime
+├── orchestration_api/        # Thin backend integration entrypoint
+├── mock_runtime_contract/    # Runtime state contract schemas/factories
+├── db/                       # DB layer + repositories + migrations
+├── tools/                    # Tool facades (e.g., journal write tool)
 ├── stt/
 │   ├── context.py            # LLM context processing + tool schemas
 │   ├── trigger.py            # Deterministic keyword fallback
@@ -111,30 +123,11 @@ labJ/
 └── ARCHITECTURE.md           # This document
 ```
 
-## Data and State
+## Current State Note
 
-Current persistence:
-
-- `sessions`
-- `utterances`
-- `actions` (present in model layer; action logging strategy can be expanded)
-
-State model:
-
-- DB is source of truth.
-- `SESSION_CACHE` and `SUBWINDOW_CACHE` provide runtime projections for fast UI reads.
-
-## Command System: LLM + Fallback
-
-Primary mechanism:
-
-- LLM tool-calling in `stt/context.py` (MCP-style function schema).
-
-Fallback mechanism:
-
-- `stt/trigger.py` keyword evaluator when LLM does not emit commands.
-
-This gives both flexibility (natural language) and deterministic safety backup.
+- Unified backend API entrypoint is `orchestration_api.app:app`.
+- Legacy backend is archived under `archive/legacy/agents/`.
+- UI remains in repo and can integrate via `POST /process_text`.
 
 ## Planned Direction (Data + Retrieval)
 

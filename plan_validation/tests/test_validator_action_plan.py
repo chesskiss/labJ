@@ -1,8 +1,8 @@
 """Validation tests for action_plan outputs."""
 
-from context_action_plan.enums import ActionName
+from context_action_plan.enums import ActionName, IntentName, ParseStatus
 from context_action_plan.parser import parse_transcript
-from context_action_plan.schemas import ActionPlan
+from context_action_plan.schemas import ActionPlan, EntityBundle, IntentInfo
 
 from plan_validation.validator import validate_parsed_output
 
@@ -16,6 +16,9 @@ def test_valid_transform_plan_is_executable():
     assert result.is_valid is True
     assert result.is_executable is True
     assert result.errors == []
+    assert parsed.entities.source_kind == "calculator_slot"
+    assert parsed.entities.source_index == 1
+    assert parsed.entities.source_ref == "calculator_1_latest"
 
 
 def test_valid_protocol_lookup_plan():
@@ -26,8 +29,13 @@ def test_valid_protocol_lookup_plan():
 
 
 def test_recognized_but_unimplemented_is_valid_non_executable():
-    parsed = parse_transcript("calculate sine of 2")
-    assert isinstance(parsed, ActionPlan)
+    parsed = ActionPlan(
+        status=ParseStatus.RECOGNIZED_BUT_UNIMPLEMENTED,
+        user_text="calculate sine of 2",
+        intent=IntentInfo(name=IntentName.CALCULATOR_OPERATION, confidence=0.84),
+        entities=EntityBundle(free_text_value="calculate sine of 2"),
+        steps=[],
+    )
     result = validate_parsed_output(parsed)
     assert result.is_valid is True
     assert result.is_executable is False
@@ -35,8 +43,13 @@ def test_recognized_but_unimplemented_is_valid_non_executable():
 
 
 def test_simulation_request_recognized_but_unimplemented_is_valid_non_executable():
-    parsed = parse_transcript("create a 3d simulation")
-    assert isinstance(parsed, ActionPlan)
+    parsed = ActionPlan(
+        status=ParseStatus.RECOGNIZED_BUT_UNIMPLEMENTED,
+        user_text="create a 3d simulation",
+        intent=IntentInfo(name=IntentName.UNSUPPORTED, confidence=0.8),
+        entities=EntityBundle(free_text_value="create a 3d simulation"),
+        steps=[],
+    )
     result = validate_parsed_output(parsed)
     assert result.is_valid is True
     assert result.is_executable is False
@@ -77,9 +90,26 @@ def test_convert_unit_without_value_or_value_from_fails():
     assert any(err.code.value == "MISSING_REQUIRED_ARG" for err in result.errors)
 
 
-def test_entity_step_mismatch_for_calculator_slot():
+def test_entity_step_mismatch_for_generic_source_index():
     parsed = parse_transcript("take result from calculator 1, add 2")
     assert isinstance(parsed, ActionPlan)
+    parsed = parsed.model_copy(
+        update={"entities": parsed.entities.model_copy(update={"source_index": 1})}
+    )
+    step0 = parsed.steps[0].model_copy(update={"args": {"slot": 2}})
+    broken = parsed.model_copy(update={"steps": [step0, *parsed.steps[1:]]})
+    result = validate_parsed_output(broken)
+    assert result.is_valid is False
+    assert any(err.code.value == "ENTITY_STEP_MISMATCH" for err in result.errors)
+
+
+def test_entity_step_mismatch_falls_back_to_deprecated_calculator_slot():
+    parsed = parse_transcript("take result from calculator 1, add 2")
+    assert isinstance(parsed, ActionPlan)
+    entities = parsed.entities.model_copy(
+        update={"source_kind": None, "source_index": None, "source_ref": None}
+    )
+    parsed = parsed.model_copy(update={"entities": entities})
     step0 = parsed.steps[0].model_copy(update={"args": {"slot": 2}})
     broken = parsed.model_copy(update={"steps": [step0, *parsed.steps[1:]]})
     result = validate_parsed_output(broken)

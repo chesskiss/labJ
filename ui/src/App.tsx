@@ -1,8 +1,7 @@
-import React from "react";
-import { Layout } from "./components/layout/Layout";
+import { AppShell } from "./components/AppShell";
 
-const App: React.FC = () => {
-  return <Layout />;
-};
+function App() {
+  return <AppShell />;
+}
 
 export default App;

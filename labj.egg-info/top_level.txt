@@ -1,7 +1,12 @@
-agents
-ai-lab-journal - open source
+archive
+context_action_plan
 data
-papers
+db
+executor_runtime
+journal_api
+mock_runtime_contract
+orchestration_api
+plan_validation
 stt
+tools
 ui
-vlab

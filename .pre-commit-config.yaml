@@ -13,3 +13,5 @@ repos:
     hooks:
       - id: mypy
         exclude: ^agents/controller\.py$
+        additional_dependencies:
+          - types-requests

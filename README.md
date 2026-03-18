@@ -27,12 +27,31 @@ uv sync
 # Install frontend dependencies
 cd ui && npm install
 
-# Run backend
-uv run python -m agents.controller
+# Run orchestration backend
+uv run uvicorn orchestration_api.app:app --reload --host 0.0.0.0 --port 8000
+
+# Optional: enable LLM parsing (with deterministic fallback)
+export LLM_API_KEY=...
 
 # Run frontend (separate terminal)
 cd ui && npm run dev
 ```
+
+### Current Runnable Components
+
+```bash
+# STT docker service
+cd stt/STT-module
+docker compose up --build -d
+
+# Module-level validation (from repo root)
+uv run pytest context_action_plan/tests plan_validation/tests executor_runtime/tests mock_runtime_contract/tests db/tests tools/tests orchestration_api/tests -q
+```
+
+The previous unified backend entrypoint (`agents/controller.py`) has been archived.
+See `archive/legacy/README.md` for legacy details and restore instructions.
+Current unified backend entrypoint is `orchestration_api.app:app`.
+Orchestration API docs/examples: `orchestration_api/README.md`.
 
 ### Voice Commands
 
@@ -51,30 +70,18 @@ Architecture, runtime flow, and repository structure are documented in [`ARCHITE
 
 ## 🧪 Testing
 
-!TODO - 
-UI:
-test anything that drags
-search all potential keyword
-Use a pre-filled notebook (template) that's contain edge cases. Copy the template and test on the copy. Then delete it at the end of the test.
-
-Comprehensive state machine tests validate all trigger combinations and edge cases:
-
 ```bash
-# Run all tests
-uv run pytest tests/test_trigger_state_machine.py -v
+# Focused module suites
+uv run pytest context_action_plan/tests -q
+uv run pytest plan_validation/tests -q
+uv run pytest executor_runtime/tests -q
+uv run pytest mock_runtime_contract/tests -q
+uv run pytest db/tests tools/tests -q
+uv run pytest orchestration_api/tests -q
 
-# Run with coverage
-uv run pytest tests/ --cov=stt --cov=agents --cov-report=term-missing
+# Or all active suites at once
+uv run pytest context_action_plan/tests plan_validation/tests executor_runtime/tests mock_runtime_contract/tests db/tests tools/tests orchestration_api/tests -q
 ```
-
-**Test Coverage:**
-- ✅ 10 test scenarios (basic → complex)
-- ✅ All trigger keyword variations
-- ✅ State transitions (pause/resume/stop)
-- ✅ Sub-window creation and management
-- ✅ Edge cases (double pause, resume without pause, etc.)
-
-See [tests/README.md](tests/README.md) for detailed test documentation.
 
 ## 🔮 Roadmap
 
@@ -97,26 +104,10 @@ See [tests/README.md](tests/README.md) for detailed test documentation.
 ## 🛠️ Development
 
 ### Key Technologies
-- **Backend**: FastAPI, SQLAlchemy, sounddevice, Groq API
+- **Core Modules**: FastAPI (STT service), SQLAlchemy, pydantic
 - **Frontend**: React 18, TypeScript, Vite, Tiptap
 - **Testing**: pytest, unittest.mock
 - **Linting**: ruff, mypy, eslint
-
-### API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/sessions` | List all journal sessions |
-| GET | `/notebook` | Get full notebook content |
-| POST | `/commands` | Execute text command |
-| GET | `/subwindows` | List active sub-windows |
-| POST | `/subwindows/{id}` | Update sub-window |
-| DELETE | `/subwindows/{id}` | Close sub-window |
-
-### Database Schema
-
-**sessions**: `id`, `title`, `start_time`, `end_time`
-**utterances**: `id`, `session_id`, `text`, `start_time`, `end_time`, `source`
 
 ## 📝 License
 

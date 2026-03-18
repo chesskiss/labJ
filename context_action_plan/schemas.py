@@ -31,8 +31,15 @@ class IntentInfo(BaseModel):
 
 
 class EntityBundle(BaseModel):
-    """Extracted entities/slots used to build execution steps."""
+    """Extracted entities used to build execution steps.
 
+    `calculator_slot` is deprecated and kept only for backward compatibility.
+    Prefer `source_kind` + `source_index` + `source_ref` for new integrations.
+    """
+
+    source_kind: Optional[str] = None
+    source_ref: Optional[str] = None
+    source_index: Optional[int] = None
     calculator_slot: Optional[int] = None
     operand: Optional[float] = None
     source_unit: Optional[str] = None

@@ -134,6 +134,9 @@ def _build_action_plan(user_text: str) -> Optional[ActionPlan]:
 
     slot = _extract_calculator_slot(lowered)
     if slot is not None:
+        entities.source_kind = "calculator_slot"
+        entities.source_ref = f"calculator_{slot}_latest"
+        entities.source_index = slot
         entities.calculator_slot = slot
         step_id = sb.next_id()
         steps.append(

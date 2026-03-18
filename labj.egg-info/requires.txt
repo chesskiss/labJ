@@ -19,6 +19,7 @@ groq>=1.0.0
 soundfile>=0.13.1
 requests>=2.32.5
 python-multipart>=0.0.22
+psycopg>=3.3.3
 
 [test]
 pytest>=7.4.0

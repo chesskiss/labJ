@@ -7,6 +7,10 @@ This cleanup keeps the current runtime architecture:
 - Command layer: `stt/context.py` with `stt/trigger.py` fallback
 - UI: `ui/*`
 
+## Future implementation milestones:
+- For semantic search (Asking LLM to remind me/pull up a protocol) - add a Vector (embeddings) DB, e.g. quandrant or just use postgress
+
+
 ## Milestone 1 - Stabilize Current Runtime
 - [ ] Add STT readiness check in backend startup (`/health` poll before starting live mic loop).
 - [ ] Add exponential backoff + retry around STT HTTP failures in `stt/STT-module/stt.py`.
