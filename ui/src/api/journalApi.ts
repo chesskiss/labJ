@@ -27,17 +27,22 @@ function logError(message: string, context?: Record<string, unknown>) {
 export interface JournalSessionSummary {
   session_id: string;
   title: string;
+  head_revision_id: string | null;
   latest_created_at: string;
   latest_entry_id: string;
   latest_entry_type: string;
+  latest_created_by: string;
+  latest_revision_kind: string;
 }
 
 export interface JournalEntryRecord {
   entry_id: string;
   session_id: string;
+  parent_revision_id: string | null;
   title: string;
   content: string;
   entry_type: string;
+  revision_kind: string;
   created_by: string;
   created_at: string;
   metadata: Record<string, unknown>;

@@ -30,9 +30,11 @@ class JournalWriteRequest(BaseModel):
 class JournalEntryResponse(BaseModel):
     entry_id: uuid.UUID
     session_id: uuid.UUID
+    parent_revision_id: uuid.UUID | None = None
     title: str
     content: str
     entry_type: str
+    revision_kind: str = "manual_edit"
     created_by: str
     created_at: datetime
     metadata: dict[str, Any] = Field(default_factory=dict)
@@ -41,9 +43,12 @@ class JournalEntryResponse(BaseModel):
 class SessionSummaryResponse(BaseModel):
     session_id: uuid.UUID
     title: str
+    head_revision_id: uuid.UUID | None = None
     latest_created_at: datetime
     latest_entry_id: uuid.UUID
     latest_entry_type: str
+    latest_created_by: str
+    latest_revision_kind: str
 
 
 class SessionListResponse(BaseModel):

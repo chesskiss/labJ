@@ -48,6 +48,8 @@ def test_create_entry_writes_journal_and_event(tmp_path: Path):
     assert payload["session_id"] == session_id
     assert payload["created_by"] == "ui_manual"
     assert payload["title"] == "Manual Session"
+    assert payload["revision_kind"] == "manual_edit"
+    assert payload["parent_revision_id"] is None
 
     engine = create_engine(os.environ["DATABASE_URL"], future=True)
     Base.metadata.create_all(engine)
@@ -110,11 +112,16 @@ def test_sessions_latest_and_history(tmp_path: Path):
     by_session = {item["session_id"]: item for item in sessions_payload}
     assert by_session[session_a]["title"] == "Session A Updated"
     assert by_session[session_b]["latest_entry_type"] == "value"
+    assert by_session[session_a]["latest_revision_kind"] == "manual_edit"
+    assert by_session[session_b]["latest_revision_kind"] == "llm_edit"
+    assert by_session[session_a]["head_revision_id"] is not None
 
     latest_response = client.get(f"/journal/sessions/{session_a}/latest")
     assert latest_response.status_code == 200
     latest_payload = latest_response.json()
     assert latest_payload["content"] == "<p>A2</p>"
+    assert latest_payload["revision_kind"] == "manual_edit"
+    assert latest_payload["parent_revision_id"] is not None
 
     history_response = client.get(
         f"/journal/sessions/{session_a}/history", params={"limit": 1}

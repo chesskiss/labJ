@@ -109,9 +109,12 @@ class JournalRepository:
             summaries.append(
                 {
                     "session_id": session_row.id,
+                    "head_revision_id": revision_row.id,
                     "latest_entry_id": revision_row.id,
                     "latest_created_at": revision_row.created_at,
                     "latest_entry_type": revision_row.entry_type,
+                    "latest_created_by": revision_row.created_by,
+                    "latest_revision_kind": revision_row.revision_kind,
                     "title": title,
                 }
             )
@@ -162,9 +165,12 @@ class JournalRepository:
             summaries.append(
                 {
                     "session_id": entry.session_id,
+                    "head_revision_id": entry.id,
                     "latest_entry_id": entry.id,
                     "latest_created_at": entry.created_at,
                     "latest_entry_type": entry.entry_type,
+                    "latest_created_by": entry.created_by,
+                    "latest_revision_kind": self._infer_revision_kind(entry.created_by),
                     "title": title,
                 }
             )

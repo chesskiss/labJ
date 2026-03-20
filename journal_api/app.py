@@ -63,12 +63,25 @@ def _to_entry_response(
     entry,
     metadata: dict,
 ) -> JournalEntryResponse:
+    parent_revision_id = getattr(entry, "parent_revision_id", None)
+    revision_kind = getattr(entry, "revision_kind", None)
+    if not isinstance(revision_kind, str) or not revision_kind.strip():
+        created_by = str(getattr(entry, "created_by", "") or "")
+        if created_by == "executor_note_capture":
+            revision_kind = "stt_append"
+        elif created_by == "ui_command":
+            revision_kind = "llm_edit"
+        else:
+            revision_kind = "manual_edit"
+
     return JournalEntryResponse(
         entry_id=entry.id,
         session_id=session_id,
+        parent_revision_id=parent_revision_id,
         title=_metadata_title(metadata),
         content=entry.content,
         entry_type=entry.entry_type,
+        revision_kind=revision_kind,
         created_by=entry.created_by,
         created_at=entry.created_at,
         metadata=metadata,
@@ -161,9 +174,12 @@ def list_sessions(
         SessionSummaryResponse(
             session_id=item["session_id"],
             title=item["title"],
+            head_revision_id=item.get("head_revision_id"),
             latest_created_at=item["latest_created_at"],
             latest_entry_id=item["latest_entry_id"],
             latest_entry_type=item["latest_entry_type"],
+            latest_created_by=item.get("latest_created_by", "unknown"),
+            latest_revision_kind=item.get("latest_revision_kind", "manual_edit"),
         )
         for item in summaries
     ]

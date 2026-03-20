@@ -403,6 +403,89 @@ textarea {
   box-shadow: 0 8px 24px rgba(16, 38, 66, 0.05);
 }
 
+.journalModeLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 12px;
+  align-items: start;
+}
+
+.revisionPanel {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  min-height: 340px;
+  max-height: 70vh;
+  overflow: auto;
+  box-shadow: 0 8px 24px rgba(16, 38, 66, 0.05);
+}
+
+.revisionPanelHeader {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.revisionPanelHeader h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.revisionPanelHeader span {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.revisionStatus {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.revisionStatus.error {
+  color: #8f1d2a;
+}
+
+.revisionList {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.revisionItem {
+  border: 1px solid #d6e1f2;
+  border-radius: 10px;
+  padding: 8px;
+  background: #fbfdff;
+}
+
+.revisionMeta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  color: #60738d;
+}
+
+.revisionKind {
+  margin-top: 2px;
+  font-size: 11px;
+  color: #32557e;
+}
+
+.revisionItem p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #243a59;
+  line-height: 1.4;
+}
+
 .editorHint {
   border-bottom: 1px solid var(--border);
   color: var(--text-muted);
@@ -736,5 +819,9 @@ textarea {
 
   .voicePromptPanel {
     width: min(340px, calc(100vw - 24px));
+  }
+
+  .journalModeLayout {
+    grid-template-columns: 1fr;
   }
 }

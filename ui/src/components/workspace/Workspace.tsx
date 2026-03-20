@@ -1,4 +1,5 @@
 import type { RefObject } from "react";
+import type { JournalEntryRecord } from "../../api/journalApi";
 import type {
   Entry,
   EntryMetadata,
@@ -10,6 +11,7 @@ import { EntryHeader } from "./EntryHeader";
 import { JournalEditor, type JournalEditorHandle } from "./JournalEditor";
 import { MetadataPanel } from "./MetadataPanel";
 import { ModeTabs } from "./ModeTabs";
+import { RevisionHistoryPanel } from "./RevisionHistoryPanel";
 import { Toolbar } from "./Toolbar";
 import { VoiceCaptureDock } from "./VoiceCaptureDock";
 
@@ -33,6 +35,9 @@ interface WorkspaceProps {
   onCloseVoicePanel: () => void;
   loadError: string | null;
   saveError: string | null;
+  revisionHistory: JournalEntryRecord[];
+  isHistoryLoading: boolean;
+  historyError: string | null;
 }
 
 export function Workspace({
@@ -55,6 +60,9 @@ export function Workspace({
   onCloseVoicePanel,
   loadError,
   saveError,
+  revisionHistory,
+  isHistoryLoading,
+  historyError,
 }: WorkspaceProps) {
   return (
     <section className="workspace" aria-label="Notebook workspace">
@@ -78,13 +86,20 @@ export function Workspace({
           )}
 
           {workspaceMode === "journal" && (
-            <JournalEditor
-              ref={editorRef}
-              entryId={entry.id}
-              initialContent={entry.content}
-              onContentChange={onEditorContentChange}
-              onBlur={onEditorBlur}
-            />
+            <div className="journalModeLayout">
+              <JournalEditor
+                ref={editorRef}
+                entryId={entry.id}
+                initialContent={entry.content}
+                onContentChange={onEditorContentChange}
+                onBlur={onEditorBlur}
+              />
+              <RevisionHistoryPanel
+                revisions={revisionHistory}
+                isLoading={isHistoryLoading}
+                error={historyError}
+              />
+            </div>
           )}
 
           {workspaceMode === "metadata" && (

@@ -2,7 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   appendJournalEntry,
   fetchLatestSessionEntry,
+  fetchSessionHistory,
   fetchSessionSummaries,
+  type JournalEntryRecord,
 } from "../api/journalApi";
 import { initialEntries } from "../data/mockData";
 import type {
@@ -149,11 +151,15 @@ export function AppShell() {
 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [revisionHistory, setRevisionHistory] = useState<JournalEntryRecord[]>([]);
+  const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   const editorRef = useRef<JournalEditorHandle | null>(null);
   const saveDebounceRef = useRef<number | null>(null);
   const savedSignatureRef = useRef<Map<string, string>>(new Map());
   const activeEntryRef = useRef<Entry | null>(null);
+  const historyRequestRef = useRef<number>(0);
 
   const activeEntry = useMemo(
     () => entries.find((entry) => entry.id === activeEntryId) ?? null,
@@ -170,6 +176,33 @@ export function AppShell() {
         window.clearTimeout(saveDebounceRef.current);
       }
     };
+  }, []);
+
+  const refreshRevisionHistory = useCallback(async (sessionId: string) => {
+    const requestId = Date.now();
+    historyRequestRef.current = requestId;
+    setIsHistoryLoading(true);
+    setHistoryError(null);
+
+    try {
+      const rows = await fetchSessionHistory(sessionId, 100);
+      if (historyRequestRef.current !== requestId) {
+        return;
+      }
+      setRevisionHistory(rows);
+    } catch (error) {
+      if (historyRequestRef.current !== requestId) {
+        return;
+      }
+      const message =
+        error instanceof Error ? error.message : "Failed to load revision history.";
+      setHistoryError(message);
+      setRevisionHistory([]);
+    } finally {
+      if (historyRequestRef.current === requestId) {
+        setIsHistoryLoading(false);
+      }
+    }
   }, []);
 
   const persistEntry = useCallback(
@@ -227,6 +260,7 @@ export function AppShell() {
 
         setSaveStatus("saved");
         setSaveError(null);
+        void refreshRevisionHistory(entry.sessionId);
         return true;
       } catch (error) {
         const message =
@@ -238,7 +272,7 @@ export function AppShell() {
         return false;
       }
     },
-    []
+    [refreshRevisionHistory]
   );
 
   const flushActiveAutosave = useCallback(
@@ -356,6 +390,17 @@ export function AppShell() {
   }, [hydrateEntriesFromApi]);
 
   useEffect(() => {
+    const activeSessionId = activeEntry?.sessionId;
+    if (!activeSessionId) {
+      setRevisionHistory([]);
+      setHistoryError(null);
+      setIsHistoryLoading(false);
+      return;
+    }
+    void refreshRevisionHistory(activeSessionId);
+  }, [activeEntry?.sessionId, refreshRevisionHistory]);
+
+  useEffect(() => {
     const handleBeforeUnload = () => {
       void flushActiveAutosave({ keepalive: true });
     };
@@ -415,6 +460,8 @@ export function AppShell() {
     setSaveStatus("saved");
     setSaveError(null);
     savedSignatureRef.current.set(nextEntry.sessionId, entrySignature(nextEntry));
+    setRevisionHistory([]);
+    setHistoryError(null);
   };
 
   const handleTitleChange = (title: string) => {
@@ -566,6 +613,9 @@ export function AppShell() {
         onCloseVoicePanel={handleCloseVoicePanel}
         loadError={loadError}
         saveError={saveError}
+        revisionHistory={revisionHistory}
+        isHistoryLoading={isHistoryLoading}
+        historyError={historyError}
       />
     </div>
   );
