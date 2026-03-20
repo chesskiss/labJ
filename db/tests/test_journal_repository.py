@@ -3,7 +3,7 @@ import uuid
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
-from db.models import Base, Event, JournalEntry
+from db.models import Base, Event, JournalEntry, JournalRevision, JournalSession
 from db.repositories.journal_repository import JournalRepository
 
 
@@ -38,3 +38,15 @@ def test_create_entry_writes_journal_and_event():
         assert event.aggregate_type == "journal_entry"
         assert event.payload["entry_type"] == "observation"
         assert event.metadata_json["source"] == "test"
+
+        revision = session.execute(
+            select(JournalRevision).where(JournalRevision.id == entry.id)
+        ).scalar_one()
+        assert revision.session_id == session_id
+        assert revision.entry_type == "observation"
+        assert revision.created_by == "pytest"
+
+        session_row = session.execute(
+            select(JournalSession).where(JournalSession.id == session_id)
+        ).scalar_one()
+        assert session_row.head_revision_id == revision.id

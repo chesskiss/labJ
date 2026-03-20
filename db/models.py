@@ -38,6 +38,63 @@ class JournalEntry(Base):
     created_by: Mapped[str] = mapped_column(String(64), nullable=False)
 
 
+class JournalSession(Base):
+    """Canonical session registry for notebook grouping and current head revision."""
+
+    __tablename__ = "journal_sessions"
+    __table_args__ = (Index("ix_journal_sessions_updated_at", "updated_at"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    title: Mapped[str] = mapped_column(
+        String(256), nullable=False, default="Untitled Session"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    created_by: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="system"
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    head_revision_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSON, nullable=False, default=dict
+    )
+
+
+class JournalRevision(Base):
+    """Snapshot-per-revision row for a journal session."""
+
+    __tablename__ = "journal_revisions"
+    __table_args__ = (
+        Index("ix_journal_revisions_session_created_at", "session_id", "created_at"),
+        Index("ix_journal_revisions_parent_revision_id", "parent_revision_id"),
+        Index("ix_journal_revisions_created_at", "created_at"),
+    )
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid, primary_key=True, default=uuid.uuid4)
+    session_id: Mapped[uuid.UUID] = mapped_column(Uuid, nullable=False)
+    parent_revision_id: Mapped[uuid.UUID | None] = mapped_column(Uuid, nullable=True)
+    content: Mapped[str] = mapped_column(Text, nullable=False)
+    content_format: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="html"
+    )
+    entry_type: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="general"
+    )
+    revision_kind: Mapped[str] = mapped_column(
+        String(64), nullable=False, default="manual_edit"
+    )
+    created_by: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    metadata_json: Mapped[dict[str, Any]] = mapped_column(
+        "metadata", JSON, nullable=False, default=dict
+    )
+
+
 class Event(Base):
     """Append-only system event log."""
 
