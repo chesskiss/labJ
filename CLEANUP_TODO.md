@@ -10,6 +10,16 @@ This cleanup keeps the current runtime architecture:
 ## Future implementation milestones:
 - For semantic search (Asking LLM to remind me/pull up a protocol) - add a Vector (embeddings) DB, e.g. quandrant or just use postgress
 
+## DB Milestones (Deferred)
+- [ ] Add `journal_sessions` table as canonical session registry (`id`, `title`, `head_revision_id`, timestamps).
+- [ ] Add `journal_revisions` table for snapshot-per-revision chain (`session_id`, `parent_revision_id`, `content`, `created_by`, `created_at`, `metadata`).
+- [ ] Backfill migration from current `journal_entries` into revision chain and preserve IDs for traceability.
+- [ ] Add revision restore endpoint (`POST /journal/sessions/{id}/restore/{revision_id}`) that creates a new head revision.
+- [ ] Add optional history pagination/sort contract (`asc`/`desc`, cursor-based).
+- [ ] Add revision metadata standard (`operation`, `base_revision_id`, `source`) across UI/manual/STT/LLM writes.
+- [ ] Add storage compaction strategy (periodic keyframe snapshots + optional delta payloads).
+- [ ] Add persistent undo/redo semantics across sessions/devices (server-side revision cursor model).
+
 
 ## Milestone 1 - Stabilize Current Runtime
 - [ ] Add STT readiness check in backend startup (`/health` poll before starting live mic loop).

@@ -1,6 +1,29 @@
 const JOURNAL_API_BASE_URL =
   (import.meta.env.VITE_JOURNAL_API_URL as string | undefined) ?? "http://localhost:8002";
 
+const JOURNAL_API_DEBUG =
+  (import.meta.env.VITE_JOURNAL_API_DEBUG as string | undefined) === "true" ||
+  import.meta.env.DEV;
+
+function logDebug(message: string, context?: Record<string, unknown>) {
+  if (!JOURNAL_API_DEBUG) {
+    return;
+  }
+  if (context) {
+    console.info(`[journalApi] ${message}`, context);
+    return;
+  }
+  console.info(`[journalApi] ${message}`);
+}
+
+function logError(message: string, context?: Record<string, unknown>) {
+  if (context) {
+    console.error(`[journalApi] ${message}`, context);
+    return;
+  }
+  console.error(`[journalApi] ${message}`);
+}
+
 export interface JournalSessionSummary {
   session_id: string;
   title: string;
@@ -44,20 +67,55 @@ function buildUrl(path: string): string {
 }
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(buildUrl(path), init);
-  if (!response.ok) {
-    let detail = response.statusText;
-    try {
-      const body = await response.json();
-      if (body && typeof body.detail === "string") {
-        detail = body.detail;
+  const url = buildUrl(path);
+  const method = init?.method ?? "GET";
+  const startedAt = performance.now();
+  logDebug("request:start", { method, url });
+
+  try {
+    const response = await fetch(url, init);
+    const elapsedMs = Math.round(performance.now() - startedAt);
+    logDebug("request:response", {
+      method,
+      url,
+      status: response.status,
+      ok: response.ok,
+      elapsedMs,
+    });
+
+    if (!response.ok) {
+      let detail = response.statusText;
+      try {
+        const body = await response.json();
+        if (body && typeof body.detail === "string") {
+          detail = body.detail;
+        }
+      } catch {
+        // ignore malformed JSON in error response
       }
-    } catch {
-      // ignore malformed JSON in error response
+      const apiError = new Error(`Journal API ${response.status}: ${detail}`);
+      logError("request:api_error", {
+        method,
+        url,
+        status: response.status,
+        detail,
+        elapsedMs,
+      });
+      throw apiError;
     }
-    throw new Error(`Journal API ${response.status}: ${detail}`);
+
+    return (await response.json()) as T;
+  } catch (error) {
+    const elapsedMs = Math.round(performance.now() - startedAt);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    logError("request:network_error", {
+      method,
+      url,
+      elapsedMs,
+      error: errorMessage,
+    });
+    throw error;
   }
-  return (await response.json()) as T;
 }
 
 export async function fetchSessionSummaries(limit = 100): Promise<JournalSessionSummary[]> {

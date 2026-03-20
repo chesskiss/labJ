@@ -36,3 +36,20 @@ class JournalWriteTool:
                 "entry_id": str(entry.id),
                 "entry_type": entry.entry_type,
             }
+
+    def get_latest_session_id(self) -> uuid.UUID | None:
+        """Return latest non-null session id from persisted journal entries."""
+        with self.session_factory() as session:
+            repo = JournalRepository(session)
+            summaries = repo.list_session_summaries(limit=1)
+            if not summaries:
+                return None
+            raw_session_id = summaries[0].get("session_id")
+            if isinstance(raw_session_id, uuid.UUID):
+                return raw_session_id
+            if isinstance(raw_session_id, str) and raw_session_id.strip():
+                try:
+                    return uuid.UUID(raw_session_id)
+                except ValueError:
+                    return None
+            return None

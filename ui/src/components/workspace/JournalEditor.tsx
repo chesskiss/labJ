@@ -32,12 +32,30 @@ function escapeHtml(value: string): string {
 export const JournalEditor = forwardRef<JournalEditorHandle, JournalEditorProps>(
   function JournalEditor({ entryId, initialContent, onContentChange, onBlur }, ref) {
     const editorRef = useRef<HTMLDivElement | null>(null);
+    const lastEntryIdRef = useRef<string | null>(null);
 
     useEffect(() => {
-      if (!editorRef.current) {
+      const editor = editorRef.current;
+      if (!editor) {
         return;
       }
-      editorRef.current.innerHTML = initialContent;
+
+      const entryChanged = lastEntryIdRef.current !== entryId;
+      lastEntryIdRef.current = entryId;
+
+      if (entryChanged) {
+        editor.innerHTML = initialContent;
+        return;
+      }
+
+      // Do not rewrite while user is typing in this entry; it resets caret selection.
+      if (document.activeElement === editor) {
+        return;
+      }
+
+      if (editor.innerHTML !== initialContent) {
+        editor.innerHTML = initialContent;
+      }
     }, [entryId, initialContent]);
 
     const notifyContentChange = () => {

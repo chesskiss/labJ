@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import uuid
+
 from context_action_plan.enums import ParseStatus
 from context_action_plan.schemas import (
     ActionPlan,
@@ -74,6 +76,7 @@ def _handle_note_capture(
         )
 
     try:
+        session_id = _resolve_note_capture_session_id(runtime)
         result = runtime.journal_write_tool.write_entry(
             content=parsed.note.content,
             entry_type=parsed.note.note_type.value,
@@ -82,6 +85,7 @@ def _handle_note_capture(
                 "intent": parsed.intent.name.value,
                 "status": parsed.status.value,
             },
+            session_id=session_id,
         )
     except Exception as exc:  # pragma: no cover
         return ExecutionResult(
@@ -104,6 +108,25 @@ def _handle_note_capture(
         final_output=result,
         notes=[],
     )
+
+
+def _resolve_note_capture_session_id(runtime: MockRuntime) -> uuid.UUID:
+    """Resolve a deterministic session id for note-capture persistence."""
+    if runtime.active_session_id is not None:
+        return runtime.active_session_id
+
+    latest_session_id: uuid.UUID | None = None
+    resolver = getattr(runtime.journal_write_tool, "get_latest_session_id", None)
+    if callable(resolver):
+        try:
+            resolved = resolver()
+            if isinstance(resolved, uuid.UUID):
+                latest_session_id = resolved
+        except Exception:
+            latest_session_id = None
+
+    runtime.active_session_id = latest_session_id or uuid.uuid4()
+    return runtime.active_session_id
 
 
 def execute_action_plan(plan: ActionPlan, runtime: MockRuntime) -> ExecutionResult:

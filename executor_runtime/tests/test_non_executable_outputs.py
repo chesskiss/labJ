@@ -1,3 +1,5 @@
+import uuid
+
 from context_action_plan.parser import parse_transcript
 from plan_validation.validator import validate_parsed_output
 
@@ -6,10 +8,13 @@ from executor_runtime.mock_state import MockRuntime
 
 
 class _FakeJournalTool:
+    def __init__(self):
+        self.last_session_id = None
+
     def write_entry(
         self, content: str, entry_type: str, metadata: dict, session_id=None
     ):
-        del session_id
+        self.last_session_id = session_id
         return {
             "status": "success",
             "entry_id": "fake-id",
@@ -17,6 +22,18 @@ class _FakeJournalTool:
             "content": content,
             "metadata": metadata,
         }
+
+    def get_latest_session_id(self):
+        return None
+
+
+class _FakeJournalToolWithLatest(_FakeJournalTool):
+    def __init__(self, session_id):
+        super().__init__()
+        self._session_id = session_id
+
+    def get_latest_session_id(self):
+        return self._session_id
 
 
 def test_note_capture_not_executed():
@@ -41,6 +58,21 @@ def test_note_capture_writes_when_journal_tool_configured():
     assert result.executed_steps == 1
     assert result.final_output is not None
     assert result.final_output["entry_type"] == "observation"
+
+
+def test_note_capture_uses_latest_session_id_when_available():
+    parsed = parse_transcript("sample 4 became cloudy after heating")
+    validation = validate_parsed_output(parsed)
+    expected_session_id = uuid.UUID("11111111-1111-1111-1111-111111111111")
+    tool = _FakeJournalToolWithLatest(expected_session_id)
+
+    runtime = MockRuntime(journal_write_tool=tool)
+    result = execute_validated_output(parsed, validation, runtime)
+
+    assert result.status.value == "succeeded"
+    assert runtime.active_session_id is not None
+    assert runtime.active_session_id == expected_session_id
+    assert tool.last_session_id == expected_session_id
 
 
 def test_clarification_not_executed():
