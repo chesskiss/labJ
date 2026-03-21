@@ -20,6 +20,7 @@ class HealthResponse(BaseModel):
 
 class JournalWriteRequest(BaseModel):
     session_id: uuid.UUID
+    base_revision_id: uuid.UUID | None = None
     title: str = Field(min_length=1, max_length=256)
     content: str
     entry_type: JournalEntryType = "general"

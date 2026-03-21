@@ -148,6 +148,8 @@ def create_journal_entry(payload: JournalWriteRequest) -> JournalEntryResponse:
     metadata = dict(payload.metadata)
     metadata["source"] = payload.source
     metadata["title"] = payload.title
+    if payload.base_revision_id is not None:
+        metadata["base_revision_id"] = str(payload.base_revision_id)
 
     with _open_session() as session:
         repo = JournalRepository(session)

@@ -316,6 +316,11 @@ textarea {
   background: #ffecef;
 }
 
+.saveStatus.conflict {
+  color: #7a4c0f;
+  background: #fff6e7;
+}
+
 .modeTabs {
   background: #ffffff;
   border-bottom: 1px solid var(--border);
@@ -484,6 +489,29 @@ textarea {
   font-size: 12px;
   color: #243a59;
   line-height: 1.4;
+}
+
+.revisionActions {
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.revisionBadge {
+  border: 1px solid #bfd4f1;
+  background: #edf5ff;
+  color: #1f4f8f;
+  border-radius: 999px;
+  font-size: 10px;
+  padding: 2px 7px;
+}
+
+.revisionBadge.viewing {
+  border-color: #d3d8df;
+  background: #f4f6f8;
+  color: #415063;
 }
 
 .editorHint {

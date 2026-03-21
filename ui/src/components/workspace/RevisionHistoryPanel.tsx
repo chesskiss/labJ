@@ -4,6 +4,9 @@ interface RevisionHistoryPanelProps {
   revisions: JournalEntryRecord[];
   isLoading: boolean;
   error: string | null;
+  loadedRevisionId: string | null;
+  headRevisionId: string | null;
+  onLoadRevision: (revision: JournalEntryRecord) => void;
 }
 
 function formatRevisionTimestamp(value: string): string {
@@ -27,6 +30,9 @@ export function RevisionHistoryPanel({
   revisions,
   isLoading,
   error,
+  loadedRevisionId,
+  headRevisionId,
+  onLoadRevision,
 }: RevisionHistoryPanelProps) {
   return (
     <aside className="revisionPanel" aria-label="Session revision history">
@@ -51,6 +57,22 @@ export function RevisionHistoryPanel({
               </div>
               <div className="revisionKind">
                 {revision.revision_kind} • {revision.entry_type}
+              </div>
+              <div className="revisionActions">
+                {headRevisionId === revision.entry_id && (
+                  <span className="revisionBadge">Head</span>
+                )}
+                {loadedRevisionId === revision.entry_id && (
+                  <span className="revisionBadge viewing">Viewing</span>
+                )}
+                <button
+                  type="button"
+                  className="secondaryButton"
+                  onClick={() => onLoadRevision(revision)}
+                  disabled={loadedRevisionId === revision.entry_id}
+                >
+                  Load
+                </button>
               </div>
               <p>{stripHtml(revision.content).slice(0, 140) || "(empty content)"}</p>
             </li>

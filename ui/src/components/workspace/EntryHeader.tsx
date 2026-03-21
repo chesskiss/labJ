@@ -14,6 +14,9 @@ export function EntryHeader({ title, saveStatus, onTitleChange }: EntryHeaderPro
   if (saveStatus === "error") {
     statusLabel = "Save failed - will retry";
   }
+  if (saveStatus === "conflict") {
+    statusLabel = "Newer revision exists - reload latest";
+  }
 
   return (
     <header className="entryHeader">

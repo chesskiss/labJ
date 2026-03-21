@@ -38,6 +38,9 @@ interface WorkspaceProps {
   revisionHistory: JournalEntryRecord[];
   isHistoryLoading: boolean;
   historyError: string | null;
+  loadedRevisionId: string | null;
+  headRevisionId: string | null;
+  onLoadRevision: (revision: JournalEntryRecord) => void;
 }
 
 export function Workspace({
@@ -63,6 +66,9 @@ export function Workspace({
   revisionHistory,
   isHistoryLoading,
   historyError,
+  loadedRevisionId,
+  headRevisionId,
+  onLoadRevision,
 }: WorkspaceProps) {
   return (
     <section className="workspace" aria-label="Notebook workspace">
@@ -81,13 +87,16 @@ export function Workspace({
           )}
           {saveError && (
             <div className="workspaceNotice warning" role="status" aria-live="polite">
-              Latest save failed. It will retry on the next autosave trigger. {saveError}
+              {saveStatus === "conflict"
+                ? `Save paused. ${saveError}`
+                : `Latest save failed. It will retry on the next autosave trigger. ${saveError}`}
             </div>
           )}
 
           {workspaceMode === "journal" && (
             <div className="journalModeLayout">
               <JournalEditor
+                key={`${entry.id}:${loadedRevisionId ?? "latest"}`}
                 ref={editorRef}
                 entryId={entry.id}
                 initialContent={entry.content}
@@ -98,6 +107,9 @@ export function Workspace({
                 revisions={revisionHistory}
                 isLoading={isHistoryLoading}
                 error={historyError}
+                loadedRevisionId={loadedRevisionId}
+                headRevisionId={headRevisionId}
+                onLoadRevision={onLoadRevision}
               />
             </div>
           )}

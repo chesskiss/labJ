@@ -50,6 +50,7 @@ export interface JournalEntryRecord {
 
 export interface JournalEntryWriteRequest {
   session_id: string;
+  base_revision_id?: string;
   title: string;
   content: string;
   entry_type?: "general" | "observation" | "value";

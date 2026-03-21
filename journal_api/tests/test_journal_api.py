@@ -30,11 +30,13 @@ def test_health(tmp_path: Path):
 def test_create_entry_writes_journal_and_event(tmp_path: Path):
     client = _client(tmp_path)
     session_id = str(uuid.uuid4())
+    base_revision_id = str(uuid.uuid4())
 
     response = client.post(
         "/journal/entries",
         json={
             "session_id": session_id,
+            "base_revision_id": base_revision_id,
             "title": "Manual Session",
             "content": "<p>Manual note</p>",
             "entry_type": "general",
@@ -50,6 +52,7 @@ def test_create_entry_writes_journal_and_event(tmp_path: Path):
     assert payload["title"] == "Manual Session"
     assert payload["revision_kind"] == "manual_edit"
     assert payload["parent_revision_id"] is None
+    assert payload["metadata"]["base_revision_id"] == base_revision_id
 
     engine = create_engine(os.environ["DATABASE_URL"], future=True)
     Base.metadata.create_all(engine)
@@ -61,6 +64,7 @@ def test_create_entry_writes_journal_and_event(tmp_path: Path):
     assert len(events) == 1
     assert events[0].metadata_json["source"] == "ui_manual"
     assert events[0].metadata_json["title"] == "Manual Session"
+    assert events[0].metadata_json["base_revision_id"] == base_revision_id
 
 
 def test_sessions_latest_and_history(tmp_path: Path):

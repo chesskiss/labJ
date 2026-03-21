@@ -109,6 +109,8 @@ function fallbackEntriesFromMockData(): Entry[] {
       ...entry,
       id: sessionId,
       sessionId,
+      headRevisionId: null,
+      baseRevisionId: null,
       createdBy: entry.createdBy || "ui_manual",
       entryType: entry.entryType || "general",
     };
@@ -121,6 +123,8 @@ function createDraftEntry(title: string): Entry {
   return {
     id: sessionId,
     sessionId,
+    headRevisionId: null,
+    baseRevisionId: null,
     title,
     updatedAt: formatUpdatedAt(nowIso),
     bucket: "today",
@@ -154,6 +158,7 @@ export function AppShell() {
   const [revisionHistory, setRevisionHistory] = useState<JournalEntryRecord[]>([]);
   const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const [loadedRevisionId, setLoadedRevisionId] = useState<string | null>(null);
 
   const editorRef = useRef<JournalEditorHandle | null>(null);
   const saveDebounceRef = useRef<number | null>(null);
@@ -178,6 +183,15 @@ export function AppShell() {
     };
   }, []);
 
+  const fetchCurrentHeadRevisionId = useCallback(async (sessionId: string) => {
+    try {
+      const latest = await fetchLatestSessionEntry(sessionId);
+      return latest.entry_id;
+    } catch {
+      return null;
+    }
+  }, []);
+
   const refreshRevisionHistory = useCallback(async (sessionId: string) => {
     const requestId = Date.now();
     historyRequestRef.current = requestId;
@@ -190,6 +204,19 @@ export function AppShell() {
         return;
       }
       setRevisionHistory(rows);
+      const latestRevisionId = rows[0]?.entry_id ?? null;
+      if (latestRevisionId) {
+        setEntries((current) =>
+          current.map((item) =>
+            item.sessionId === sessionId
+              ? {
+                  ...item,
+                  headRevisionId: latestRevisionId,
+                }
+              : item
+          )
+        );
+      }
     } catch (error) {
       if (historyRequestRef.current !== requestId) {
         return;
@@ -216,6 +243,7 @@ export function AppShell() {
     ): Promise<boolean> => {
       const signature = entrySignature(entry);
       const lastSavedSignature = savedSignatureRef.current.get(entry.sessionId);
+      const baseRevisionId = entry.baseRevisionId ?? entry.headRevisionId;
 
       if (!options?.force && source === "ui_manual" && lastSavedSignature === signature) {
         setSaveStatus("saved");
@@ -223,9 +251,22 @@ export function AppShell() {
       }
 
       try {
+        if (baseRevisionId && entry.headRevisionId) {
+          const currentHeadRevisionId = await fetchCurrentHeadRevisionId(entry.sessionId);
+          if (currentHeadRevisionId && currentHeadRevisionId !== entry.headRevisionId) {
+            setSaveStatus("conflict");
+            setSaveError(
+              "A newer revision was created in this session. Reload latest before saving."
+            );
+            void refreshRevisionHistory(entry.sessionId);
+            return false;
+          }
+        }
+
         const response = await appendJournalEntry(
           {
             session_id: entry.sessionId,
+            base_revision_id: baseRevisionId ?? undefined,
             title: entry.title,
             content: entry.content,
             entry_type: "general",
@@ -248,6 +289,8 @@ export function AppShell() {
                   ...item,
                   title: response.title,
                   content: response.content,
+                  headRevisionId: response.entry_id,
+                  baseRevisionId: response.entry_id,
                   updatedAt: formatUpdatedAt(response.created_at),
                   bucket: toEntryBucket(response.created_at),
                   metadata: normalizeEntryMetadata(response.metadata, response.created_at),
@@ -260,6 +303,7 @@ export function AppShell() {
 
         setSaveStatus("saved");
         setSaveError(null);
+        setLoadedRevisionId(response.entry_id);
         void refreshRevisionHistory(entry.sessionId);
         return true;
       } catch (error) {
@@ -272,7 +316,7 @@ export function AppShell() {
         return false;
       }
     },
-    [refreshRevisionHistory]
+    [fetchCurrentHeadRevisionId, refreshRevisionHistory]
   );
 
   const flushActiveAutosave = useCallback(
@@ -341,6 +385,10 @@ export function AppShell() {
         return {
           id: summary.session_id,
           sessionId: summary.session_id,
+          headRevisionId:
+            latest?.entry_id ?? summary.head_revision_id ?? summary.latest_entry_id ?? null,
+          baseRevisionId:
+            latest?.entry_id ?? summary.head_revision_id ?? summary.latest_entry_id ?? null,
           title: summary.title,
           updatedAt: formatUpdatedAt(createdAt),
           bucket: toEntryBucket(createdAt),
@@ -365,6 +413,7 @@ export function AppShell() {
 
       setEntries(hydratedEntries);
       setActiveEntryId(hydratedEntries[0].id);
+      setLoadedRevisionId(hydratedEntries[0].baseRevisionId);
       setSaveStatus("saved");
     } catch (error) {
       const message =
@@ -379,6 +428,7 @@ export function AppShell() {
       );
       setEntries(fallbackEntries);
       setActiveEntryId(fallbackEntries[0].id);
+      setLoadedRevisionId(fallbackEntries[0].baseRevisionId);
       setSaveStatus("saved");
     } finally {
       setIsHydrating(false);
@@ -397,8 +447,9 @@ export function AppShell() {
       setIsHistoryLoading(false);
       return;
     }
+    setLoadedRevisionId(activeEntry.baseRevisionId);
     void refreshRevisionHistory(activeSessionId);
-  }, [activeEntry?.sessionId, refreshRevisionHistory]);
+  }, [activeEntry?.baseRevisionId, activeEntry?.sessionId, refreshRevisionHistory]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -433,6 +484,7 @@ export function AppShell() {
         entry.id === currentActive.id
           ? {
               ...updater(entry),
+              baseRevisionId: entry.baseRevisionId ?? entry.headRevisionId,
               updatedAt: "Now",
             }
           : entry
@@ -456,6 +508,7 @@ export function AppShell() {
     const nextEntry = createDraftEntry(`Untitled Session ${entries.length + 1}`);
     setEntries((current) => [nextEntry, ...current]);
     setActiveEntryId(nextEntry.id);
+    setLoadedRevisionId(null);
     setWorkspaceMode("journal");
     setSaveStatus("saved");
     setSaveError(null);
@@ -494,6 +547,29 @@ export function AppShell() {
       void flushActiveAutosave();
     }
     setWorkspaceMode(mode);
+  };
+
+  const handleLoadRevision = (revision: JournalEntryRecord) => {
+    setEntries((current) =>
+      current.map((entry) =>
+        entry.id === activeEntryId
+          ? {
+              ...entry,
+              title: revision.title,
+              content: revision.content,
+              baseRevisionId: revision.entry_id,
+              updatedAt: formatUpdatedAt(revision.created_at),
+              metadata: normalizeEntryMetadata(revision.metadata, revision.created_at),
+              createdBy: revision.created_by,
+              entryType: revision.entry_type,
+            }
+          : entry
+      )
+    );
+    setLoadedRevisionId(revision.entry_id);
+    setSaveStatus("saved");
+    setSaveError(null);
+    setWorkspaceMode("journal");
   };
 
   const handleToolbarAction = (action: ToolbarAction) => {
@@ -616,6 +692,9 @@ export function AppShell() {
         revisionHistory={revisionHistory}
         isHistoryLoading={isHistoryLoading}
         historyError={historyError}
+        loadedRevisionId={loadedRevisionId}
+        headRevisionId={activeEntry.headRevisionId}
+        onLoadRevision={handleLoadRevision}
       />
     </div>
   );

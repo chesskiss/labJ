@@ -8,7 +8,7 @@ export type VoiceCaptureState = "idle" | "listening" | "processing";
 
 export type VoiceCaptureMode = "dictation" | "command" | "note";
 
-export type SaveStatus = "saved" | "saving" | "error";
+export type SaveStatus = "saved" | "saving" | "error" | "conflict";
 
 export type ToolbarAction =
   | "bold"
@@ -28,6 +28,8 @@ export interface EntryMetadata {
 export interface Entry {
   id: string;
   sessionId: string;
+  headRevisionId: string | null;
+  baseRevisionId: string | null;
   title: string;
   updatedAt: string;
   bucket: EntryBucket;
