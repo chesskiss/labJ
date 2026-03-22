@@ -48,6 +48,18 @@ Expected high-level result:
 - `execution.status = succeeded`
 - `execution.final_output.entry_id` present
 
+Optional request fields:
+- `session_id` (UUID): pins note-capture write into a specific session
+- `metadata` (object): forwarded into persistence metadata; `metadata.title` is used as session title hint
+
+Example with explicit session + title:
+
+```bash
+curl -X POST http://localhost:8000/process_text \
+  -H "Content-Type: application/json" \
+  -d '{"text":"sample 7 became clearer after cooling","session_id":"22222222-2222-2222-2222-222222222222","metadata":{"title":"Cooling Session","operator":"arnold"}}'
+```
+
 ### 2) Action plan flow
 
 ```bash

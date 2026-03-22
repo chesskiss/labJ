@@ -18,3 +18,5 @@ class MockRuntime:
     protocol_index: dict[str, dict[str, Any]] = field(default_factory=dict)
     observations: list[str] = field(default_factory=list)
     journal_write_tool: Any | None = None
+    note_capture_title: str | None = None
+    note_capture_metadata: dict[str, Any] = field(default_factory=dict)

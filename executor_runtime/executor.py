@@ -12,6 +12,7 @@ from context_action_plan.schemas import (
     ParsedOutput,
 )
 from plan_validation.schemas import ValidationResult
+from tools.journal_tool import append_note_to_content
 
 from .enums import ExecutionStatus, RuntimeErrorCode
 from .mock_state import MockRuntime
@@ -77,14 +78,20 @@ def _handle_note_capture(
 
     try:
         session_id = _resolve_note_capture_session_id(runtime)
+        latest_content = _get_latest_session_content(runtime, session_id)
+        combined_content = append_note_to_content(latest_content, parsed.note.content)
+        metadata = dict(getattr(runtime, "note_capture_metadata", {}) or {})
+        runtime_title = getattr(runtime, "note_capture_title", None)
+        if isinstance(runtime_title, str) and runtime_title.strip():
+            metadata.setdefault("title", runtime_title.strip())
+        metadata.setdefault("title", _default_session_title(session_id))
+        metadata["source"] = "executor_note_capture"
+        metadata["intent"] = parsed.intent.name.value
+        metadata["status"] = parsed.status.value
         result = runtime.journal_write_tool.write_entry(
-            content=parsed.note.content,
+            content=combined_content,
             entry_type=parsed.note.note_type.value,
-            metadata={
-                "source": "note_capture",
-                "intent": parsed.intent.name.value,
-                "status": parsed.status.value,
-            },
+            metadata=metadata,
             session_id=session_id,
         )
     except Exception as exc:  # pragma: no cover
@@ -127,6 +134,25 @@ def _resolve_note_capture_session_id(runtime: MockRuntime) -> uuid.UUID:
 
     runtime.active_session_id = latest_session_id or uuid.uuid4()
     return runtime.active_session_id
+
+
+def _default_session_title(session_id: uuid.UUID) -> str:
+    return f"Session {str(session_id).split('-')[0]}"
+
+
+def _get_latest_session_content(
+    runtime: MockRuntime, session_id: uuid.UUID
+) -> str | None:
+    reader = getattr(runtime.journal_write_tool, "get_latest_entry_content", None)
+    if not callable(reader):
+        return None
+    try:
+        content = reader(session_id)
+    except Exception:
+        return None
+    if isinstance(content, str):
+        return content
+    return None
 
 
 def execute_action_plan(plan: ActionPlan, runtime: MockRuntime) -> ExecutionResult:

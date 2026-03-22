@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import uuid
 
 from fastapi import FastAPI, HTTPException
 from fastapi import File, Query, UploadFile
@@ -53,10 +54,17 @@ def health() -> HealthResponse:
 @app.post("/process_text", response_model=ProcessTextResponse)
 def process_text(payload: ProcessTextRequest) -> ProcessTextResponse:
     try:
-        parsed, validation, execution = _run_pipeline(payload.text)
+        requested_session_id = _parse_optional_session_id(payload.session_id)
+        parsed, validation, execution = _run_pipeline(
+            payload.text,
+            session_id=requested_session_id,
+            request_metadata=payload.metadata,
+        )
         return ProcessTextResponse(
             parsed=parsed, validation=validation, execution=execution
         )
+    except HTTPException:
+        raise
     except Exception as exc:
         raise HTTPException(
             status_code=500,
@@ -170,13 +178,49 @@ async def process_audio(
         ) from exc
 
 
-def _run_pipeline(text: str) -> tuple[dict, dict, dict]:
+def _parse_optional_session_id(raw_value: str | None) -> uuid.UUID | None:
+    if raw_value is None:
+        return None
+    trimmed = raw_value.strip()
+    if not trimmed:
+        return None
+    try:
+        return uuid.UUID(trimmed)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error_code": "INVALID_SESSION_ID",
+                "message": f"session_id must be a valid UUID: {raw_value}",
+            },
+        ) from exc
+
+
+def _run_pipeline(
+    text: str,
+    session_id: uuid.UUID | None = None,
+    request_metadata: dict | None = None,
+) -> tuple[dict, dict, dict]:
     parsed_model = parse_transcript_with_fallback(text)
     validation_model = validate_parsed_output(parsed_model)
     runtime = get_runtime()
-    execution_model = execute_validated_output(parsed_model, validation_model, runtime)
-    return (
-        parsed_model.model_dump(mode="json"),
-        validation_model.model_dump(mode="json"),
-        execution_model.model_dump(mode="json"),
-    )
+    if session_id is not None:
+        runtime.active_session_id = session_id
+
+    metadata = dict(request_metadata or {})
+    runtime.note_capture_metadata = metadata
+    title = metadata.get("title")
+    runtime.note_capture_title = title if isinstance(title, str) else None
+
+    try:
+        execution_model = execute_validated_output(
+            parsed_model, validation_model, runtime
+        )
+        return (
+            parsed_model.model_dump(mode="json"),
+            validation_model.model_dump(mode="json"),
+            execution_model.model_dump(mode="json"),
+        )
+    finally:
+        runtime.note_capture_metadata = {}
+        runtime.note_capture_title = None

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import html
 import uuid
 from typing import Any, Optional
 
@@ -53,3 +54,32 @@ class JournalWriteTool:
                 except ValueError:
                     return None
             return None
+
+    def get_latest_entry_content(self, session_id: uuid.UUID) -> str | None:
+        """Return latest content for a session, or None when absent."""
+        with self.session_factory() as session:
+            repo = JournalRepository(session)
+            latest = repo.get_latest_entry_by_session(session_id)
+            if latest is None:
+                return None
+            entry, _metadata = latest
+            content = getattr(entry, "content", "")
+            if isinstance(content, str):
+                return content
+            return str(content)
+
+
+def append_note_to_content(existing_content: str | None, note_text: str) -> str:
+    """Append note text onto existing snapshot content (plain text or HTML)."""
+    note = note_text.strip()
+    if not note:
+        return existing_content or ""
+
+    current = (existing_content or "").strip()
+    if not current:
+        return note
+
+    looks_html = "<" in current and ">" in current
+    if looks_html:
+        return f"{current}<div>{html.escape(note)}</div>"
+    return f"{current}\n{note}"

@@ -5,7 +5,7 @@ from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from db.models import Base, Event, JournalEntry
-from tools.journal_tool import JournalWriteTool
+from tools.journal_tool import JournalWriteTool, append_note_to_content
 
 
 def test_journal_tool_writes_entry_and_event(tmp_path: Path):
@@ -59,3 +59,38 @@ def test_get_latest_session_id_returns_latest_non_null(tmp_path: Path):
     )
 
     assert tool.get_latest_session_id() == session_b
+
+
+def test_get_latest_entry_content_returns_latest_content(tmp_path: Path):
+    db_path = tmp_path / "journal_tool_latest_content.sqlite"
+    database_url = f"sqlite+pysqlite:///{db_path}"
+
+    engine = create_engine(database_url, future=True)
+    Base.metadata.create_all(engine)
+
+    tool = JournalWriteTool(database_url=database_url)
+    session_id = uuid.uuid4()
+    tool.write_entry(
+        content="first",
+        entry_type="general",
+        metadata={"source": "tool_test", "title": "Tool Session"},
+        session_id=session_id,
+    )
+    tool.write_entry(
+        content="first\nsecond",
+        entry_type="general",
+        metadata={"source": "tool_test", "title": "Tool Session"},
+        session_id=session_id,
+    )
+
+    assert tool.get_latest_entry_content(session_id) == "first\nsecond"
+
+
+def test_append_note_to_content_plain_text():
+    assert append_note_to_content("line 1", "line 2") == "line 1\nline 2"
+
+
+def test_append_note_to_content_html():
+    assert append_note_to_content("<p>line 1</p>", "line <2>") == (
+        "<p>line 1</p><div>line &lt;2&gt;</div>"
+    )

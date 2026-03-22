@@ -20,6 +20,13 @@ This cleanup keeps the current runtime architecture:
 - [ ] Add storage compaction strategy (periodic keyframe snapshots + optional delta payloads).
 - [ ] Add persistent undo/redo semantics across sessions/devices (server-side revision cursor model).
 
+## DB Hardening Milestone (Deferred)
+- [ ] Adopt migration runner (Alembic) and move manual SQL migrations under managed revision history.
+- [ ] Add migration checks to CI (upgrade on clean DB + downgrade/compatibility check where feasible).
+- [ ] Add API contract tests for `journal_api` request/response fields and error payloads.
+- [ ] Add a single CI/local gate command that runs: migration check, `db.sanity_check`, DB/tool/runtime/orchestrator persistence tests.
+- [ ] Keep schema changes additive-first until migration runner + CI gate are in place.
+
 
 ## Milestone 1 - Stabilize Current Runtime
 - [ ] Add STT readiness check in backend startup (`/health` poll before starting live mic loop).
