@@ -326,6 +326,13 @@ class JournalRepository:
         self.session.add(revision)
         session_row.head_revision_id = revision.id
 
+    def get_head_revision_id(self, session_id: uuid.UUID) -> uuid.UUID | None:
+        """Return current head revision id for a session, if present."""
+        stmt = select(JournalSession.head_revision_id).where(
+            JournalSession.id == session_id
+        )
+        return self.session.execute(stmt).scalar_one_or_none()
+
     @staticmethod
     def _infer_revision_kind(created_by: str) -> str:
         if created_by == "executor_note_capture":

@@ -25,6 +25,34 @@ uv run uvicorn journal_api.app:app --host 0.0.0.0 --port 8002 --reload
 - `GET /journal/sessions/{session_id}/history?limit=&before=`
 - `POST /journal/entries`
 
+## Contract (Frozen For Integration)
+
+### POST `/journal/entries` request
+
+- `session_id` (UUID, required)
+- `base_revision_id` (UUID, optional)
+- `title` (string, required)
+- `content` (string HTML, required)
+- `entry_type` (`general | observation | value`)
+- `source` (`ui_manual | ui_command`)
+- `metadata` (object, optional)
+
+If `base_revision_id` is provided and does not match current session head revision,
+the API returns `409 revision_conflict`.
+
+### Error payload format
+
+All non-2xx responses use:
+
+- `code` (string)
+- `message` (string)
+- `details` (object)
+
+Examples:
+- `404 session_not_found`
+- `409 revision_conflict`
+- `422 validation_error`
+
 ## Notes
 
 - Uses existing `journal_entries` and `events` tables.

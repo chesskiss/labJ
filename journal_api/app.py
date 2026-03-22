@@ -10,13 +10,17 @@ from datetime import datetime
 from functools import lru_cache
 
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Request
+from fastapi.responses import JSONResponse
+from starlette import status
 
 from db.connection import create_db_engine, create_session_factory
 from db.models import Base
 from db.repositories.journal_repository import JournalRepository
 from journal_api.schemas import (
+    ApiErrorResponse,
     HealthResponse,
     HistoryResponse,
     JournalEntryResponse,
@@ -56,6 +60,23 @@ def _metadata_title(metadata: dict) -> str:
 def _open_session():
     session_factory = _session_factory_cached()
     return session_factory()
+
+
+def _api_error(
+    *,
+    status_code: int,
+    code: str,
+    message: str,
+    details: dict | None = None,
+) -> HTTPException:
+    return HTTPException(
+        status_code=status_code,
+        detail={
+            "code": code,
+            "message": message,
+            "details": details or {},
+        },
+    )
 
 
 def _to_entry_response(
@@ -103,6 +124,33 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(_request: Request, exc: HTTPException):
+    if isinstance(exc.detail, dict) and {"code", "message", "details"} <= set(
+        exc.detail
+    ):
+        payload = exc.detail
+    else:
+        payload = {
+            "code": "http_error",
+            "message": str(exc.detail),
+            "details": {},
+        }
+    return JSONResponse(status_code=exc.status_code, content=payload)
+
+
+@app.exception_handler(RequestValidationError)
+async def request_validation_handler(_request: Request, exc: RequestValidationError):
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content=ApiErrorResponse(
+            code="validation_error",
+            message="Request payload validation failed.",
+            details={"errors": exc.errors()},
+        ).model_dump(),
+    )
 
 
 @app.middleware("http")
@@ -153,6 +201,23 @@ def create_journal_entry(payload: JournalWriteRequest) -> JournalEntryResponse:
 
     with _open_session() as session:
         repo = JournalRepository(session)
+        current_head_revision_id = repo.get_head_revision_id(payload.session_id)
+        if (
+            payload.base_revision_id is not None
+            and current_head_revision_id is not None
+            and payload.base_revision_id != current_head_revision_id
+        ):
+            raise _api_error(
+                status_code=status.HTTP_409_CONFLICT,
+                code="revision_conflict",
+                message="base_revision_id does not match current head revision.",
+                details={
+                    "session_id": str(payload.session_id),
+                    "base_revision_id": str(payload.base_revision_id),
+                    "current_head_revision_id": str(current_head_revision_id),
+                },
+            )
+
         entry = repo.create_entry(
             content=payload.content,
             entry_type=payload.entry_type,
@@ -197,7 +262,12 @@ def latest_entry_for_session(session_id: uuid.UUID) -> JournalEntryResponse:
 
     if result is None:
         logger.warning("journal:latest_entry_missing session_id=%s", session_id)
-        raise HTTPException(status_code=404, detail="Session has no journal entries")
+        raise _api_error(
+            status_code=status.HTTP_404_NOT_FOUND,
+            code="session_not_found",
+            message="Session has no journal entries.",
+            details={"session_id": str(session_id)},
+        )
 
     entry, metadata = result
     return _to_entry_response(session_id, entry, metadata)

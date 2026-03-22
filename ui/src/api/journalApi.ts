@@ -93,7 +93,9 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
       let detail = response.statusText;
       try {
         const body = await response.json();
-        if (body && typeof body.detail === "string") {
+        if (body && typeof body.message === "string") {
+          detail = body.message;
+        } else if (body && typeof body.detail === "string") {
           detail = body.detail;
         }
       } catch {

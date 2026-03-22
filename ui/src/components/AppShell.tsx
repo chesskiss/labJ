@@ -22,6 +22,7 @@ import { Workspace } from "./workspace/Workspace";
 import type { JournalEditorHandle } from "./workspace/JournalEditor";
 
 const AUTOSAVE_DELAY_MS = 2000;
+const AUTOSAVE_MAX_ATTEMPTS = 3;
 
 type JournalSource = "ui_manual" | "ui_command";
 
@@ -30,6 +31,24 @@ function createSessionId(): string {
     return crypto.randomUUID();
   }
   return `session-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
+
+function isTransientSaveError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("Failed to fetch") ||
+    message.includes("NetworkError") ||
+    message.includes("429") ||
+    message.includes("502") ||
+    message.includes("503") ||
+    message.includes("504")
+  );
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
 }
 
 function escapeHtml(value: string): string {
@@ -113,6 +132,8 @@ function fallbackEntriesFromMockData(): Entry[] {
       baseRevisionId: null,
       createdBy: entry.createdBy || "ui_manual",
       entryType: entry.entryType || "general",
+      lastSavedAt: entry.lastSavedAt ?? null,
+      isDirty: false,
     };
   });
 }
@@ -127,6 +148,8 @@ function createDraftEntry(title: string): Entry {
     baseRevisionId: null,
     title,
     updatedAt: formatUpdatedAt(nowIso),
+    lastSavedAt: null,
+    isDirty: false,
     bucket: "today",
     content: "<p>Start documenting this experiment...</p>",
     metadata: {
@@ -170,6 +193,12 @@ export function AppShell() {
     () => entries.find((entry) => entry.id === activeEntryId) ?? null,
     [entries, activeEntryId]
   );
+  const isViewingHistoricalRevision = useMemo(() => {
+    if (!activeEntry?.headRevisionId || !loadedRevisionId) {
+      return false;
+    }
+    return activeEntry.headRevisionId !== loadedRevisionId;
+  }, [activeEntry?.headRevisionId, loadedRevisionId]);
 
   useEffect(() => {
     activeEntryRef.current = activeEntry;
@@ -247,6 +276,16 @@ export function AppShell() {
 
       if (!options?.force && source === "ui_manual" && lastSavedSignature === signature) {
         setSaveStatus("saved");
+        setEntries((current) =>
+          current.map((item) =>
+            item.sessionId === entry.sessionId
+              ? {
+                  ...item,
+                  isDirty: false,
+                }
+              : item
+          )
+        );
         return true;
       }
 
@@ -263,22 +302,47 @@ export function AppShell() {
           }
         }
 
-        const response = await appendJournalEntry(
-          {
-            session_id: entry.sessionId,
-            base_revision_id: baseRevisionId ?? undefined,
-            title: entry.title,
-            content: entry.content,
-            entry_type: "general",
-            source,
-            metadata: {
-              date: entry.metadata.date,
-              tags: entry.metadata.tags,
-              notes: entry.metadata.notes,
-            },
-          },
-          { keepalive: options?.keepalive }
-        );
+        let response: Awaited<ReturnType<typeof appendJournalEntry>> | null = null;
+        let retryAttempt = 0;
+        let lastError: unknown = null;
+
+        while (retryAttempt < AUTOSAVE_MAX_ATTEMPTS && !response) {
+          try {
+            response = await appendJournalEntry(
+              {
+                session_id: entry.sessionId,
+                base_revision_id: baseRevisionId ?? undefined,
+                title: entry.title,
+                content: entry.content,
+                entry_type: "general",
+                source,
+                metadata: {
+                  date: entry.metadata.date,
+                  tags: entry.metadata.tags,
+                  notes: entry.metadata.notes,
+                },
+              },
+              { keepalive: options?.keepalive }
+            );
+          } catch (error) {
+            lastError = error;
+            const canRetry =
+              isTransientSaveError(error) && retryAttempt < AUTOSAVE_MAX_ATTEMPTS - 1;
+            if (!canRetry) {
+              throw error;
+            }
+            const backoffMs = 500 * 2 ** retryAttempt;
+            retryAttempt += 1;
+            setSaveError(
+              `Autosave retry ${retryAttempt}/${AUTOSAVE_MAX_ATTEMPTS - 1} in ${backoffMs}ms...`
+            );
+            await delay(backoffMs);
+          }
+        }
+
+        if (!response) {
+          throw lastError ?? new Error("Failed to save journal entry.");
+        }
 
         savedSignatureRef.current.set(entry.sessionId, signature);
 
@@ -292,6 +356,8 @@ export function AppShell() {
                   headRevisionId: response.entry_id,
                   baseRevisionId: response.entry_id,
                   updatedAt: formatUpdatedAt(response.created_at),
+                  lastSavedAt: response.created_at,
+                  isDirty: false,
                   bucket: toEntryBucket(response.created_at),
                   metadata: normalizeEntryMetadata(response.metadata, response.created_at),
                   createdBy: response.created_by,
@@ -310,7 +376,7 @@ export function AppShell() {
         const message =
           error instanceof Error
             ? error.message
-            : "Failed to save journal entry. Retrying on next autosave trigger.";
+            : "Failed to save journal entry after retries. Will retry on next autosave trigger.";
         setSaveStatus("error");
         setSaveError(message);
         return false;
@@ -391,6 +457,8 @@ export function AppShell() {
             latest?.entry_id ?? summary.head_revision_id ?? summary.latest_entry_id ?? null,
           title: summary.title,
           updatedAt: formatUpdatedAt(createdAt),
+          lastSavedAt: createdAt,
+          isDirty: false,
           bucket: toEntryBucket(createdAt),
           content: latest?.content ?? "<p>Start documenting this experiment...</p>",
           metadata,
@@ -486,6 +554,7 @@ export function AppShell() {
               ...updater(entry),
               baseRevisionId: entry.baseRevisionId ?? entry.headRevisionId,
               updatedAt: "Now",
+              isDirty: true,
             }
           : entry
       )
@@ -559,9 +628,11 @@ export function AppShell() {
               content: revision.content,
               baseRevisionId: revision.entry_id,
               updatedAt: formatUpdatedAt(revision.created_at),
+              isDirty: false,
               metadata: normalizeEntryMetadata(revision.metadata, revision.created_at),
               createdBy: revision.created_by,
               entryType: revision.entry_type,
+              lastSavedAt: revision.created_at,
             }
           : entry
       )
@@ -571,6 +642,30 @@ export function AppShell() {
     setSaveError(null);
     setWorkspaceMode("journal");
   };
+
+  const handleLoadLatestRevision = useCallback(async () => {
+    const current = activeEntryRef.current;
+    if (!current?.sessionId || !current.headRevisionId) {
+      return;
+    }
+
+    const fromHistory =
+      revisionHistory.find((item) => item.entry_id === current.headRevisionId) ?? null;
+
+    if (fromHistory) {
+      handleLoadRevision(fromHistory);
+      return;
+    }
+
+    try {
+      const latest = await fetchLatestSessionEntry(current.sessionId);
+      handleLoadRevision(latest);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to load latest revision.";
+      setSaveError(message);
+    }
+  }, [handleLoadRevision, revisionHistory]);
 
   const handleToolbarAction = (action: ToolbarAction) => {
     if (workspaceMode !== "journal") {
@@ -607,6 +702,7 @@ export function AppShell() {
       ...current,
       content: `${current.content}${commandBlock}`,
       updatedAt: "Now",
+      isDirty: true,
     };
 
     setEntries((entriesList) =>
@@ -695,6 +791,10 @@ export function AppShell() {
         loadedRevisionId={loadedRevisionId}
         headRevisionId={activeEntry.headRevisionId}
         onLoadRevision={handleLoadRevision}
+        onLoadLatestRevision={() => {
+          void handleLoadLatestRevision();
+        }}
+        isViewingHistoricalRevision={isViewingHistoricalRevision}
       />
     </div>
   );

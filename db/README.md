@@ -19,6 +19,19 @@ uv run python -m db.examples
 uv run python -m tools.examples
 ```
 
+### Revision/Session Sanity Check
+
+Run a consistency check for `journal_sessions`, `journal_revisions`, `journal_entries`, and
+`journal_entry_created` events:
+
+```bash
+uv run python -m db.sanity_check
+```
+
+Exit code:
+- `0` = no hard consistency errors
+- `1` = at least one error detected
+
 If `DATABASE_URL` is not set, examples default to:
 
 ```text

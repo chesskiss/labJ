@@ -18,6 +18,12 @@ class HealthResponse(BaseModel):
     service: str
 
 
+class ApiErrorResponse(BaseModel):
+    code: str
+    message: str
+    details: dict[str, Any] = Field(default_factory=dict)
+
+
 class JournalWriteRequest(BaseModel):
     session_id: uuid.UUID
     base_revision_id: uuid.UUID | None = None

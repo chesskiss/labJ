@@ -1,4 +1,4 @@
-# Journal API Revision Contract (Draft)
+# Journal API Revision Contract (Frozen v1)
 
 This document defines API changes for moving from `journal_entries`-as-latest model
 into session + revision model.
@@ -54,10 +54,11 @@ Optional future query params:
 - `direction=asc|desc`
 - `after=<cursor>`
 
-### POST `/journal/entries` (transitional)
+### POST `/journal/entries` (active)
 
-Current request can stay during migration:
+Request:
 - `session_id`
+- `base_revision_id` (optional)
 - `title`
 - `content`
 - `entry_type`
@@ -73,6 +74,23 @@ Server behavior in revision model:
 Additional metadata to standardize:
 - `operation` (`append`, `replace`, `insert_at_start`, ...)
 - `base_revision_id`
+
+Conflict rule:
+- If request includes `base_revision_id` and it does not match current session head:
+  - return HTTP `409`
+  - error code `revision_conflict`
+
+## Error Contract
+
+All non-2xx responses return:
+- `code: string`
+- `message: string`
+- `details: object`
+
+Current codes:
+- `session_not_found` (`404`)
+- `revision_conflict` (`409`)
+- `validation_error` (`422`)
 
 ### Optional new endpoint: POST `/journal/sessions/{session_id}/restore/{revision_id}`
 

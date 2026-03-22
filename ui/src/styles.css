@@ -295,6 +295,11 @@ textarea {
   gap: 12px;
 }
 
+.saveMeta {
+  font-size: 12px;
+  color: #5f7086;
+}
+
 .saveStatus {
   font-size: 12px;
   padding: 5px 9px;
@@ -388,6 +393,12 @@ textarea {
   margin-bottom: 10px;
 }
 
+.workspaceNotice .noticeAction {
+  margin-left: 8px;
+  padding: 4px 9px;
+  font-size: 12px;
+}
+
 .workspaceNotice.error {
   background: #ffecef;
   border-color: #f0b8be;
@@ -442,6 +453,12 @@ textarea {
 .revisionPanelHeader span {
   font-size: 12px;
   color: var(--text-muted);
+}
+
+.revisionHeaderActions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .revisionStatus {

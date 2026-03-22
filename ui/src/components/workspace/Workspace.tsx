@@ -41,6 +41,8 @@ interface WorkspaceProps {
   loadedRevisionId: string | null;
   headRevisionId: string | null;
   onLoadRevision: (revision: JournalEntryRecord) => void;
+  onLoadLatestRevision: () => void;
+  isViewingHistoricalRevision: boolean;
 }
 
 export function Workspace({
@@ -69,11 +71,19 @@ export function Workspace({
   loadedRevisionId,
   headRevisionId,
   onLoadRevision,
+  onLoadLatestRevision,
+  isViewingHistoricalRevision,
 }: WorkspaceProps) {
   return (
     <section className="workspace" aria-label="Notebook workspace">
       <div className="workspaceMain">
-        <EntryHeader title={entry.title} saveStatus={saveStatus} onTitleChange={onTitleChange} />
+        <EntryHeader
+          title={entry.title}
+          saveStatus={saveStatus}
+          isDirty={entry.isDirty}
+          lastSavedAt={entry.lastSavedAt}
+          onTitleChange={onTitleChange}
+        />
 
         <ModeTabs activeMode={workspaceMode} onModeChange={onModeChange} />
 
@@ -90,6 +100,14 @@ export function Workspace({
               {saveStatus === "conflict"
                 ? `Save paused. ${saveError}`
                 : `Latest save failed. It will retry on the next autosave trigger. ${saveError}`}
+            </div>
+          )}
+          {isViewingHistoricalRevision && (
+            <div className="workspaceNotice warning" role="status" aria-live="polite">
+              You are editing an older revision, not the current head.
+              <button type="button" className="secondaryButton noticeAction" onClick={onLoadLatestRevision}>
+                Load latest
+              </button>
             </div>
           )}
 
@@ -110,6 +128,8 @@ export function Workspace({
                 loadedRevisionId={loadedRevisionId}
                 headRevisionId={headRevisionId}
                 onLoadRevision={onLoadRevision}
+                onLoadLatestRevision={onLoadLatestRevision}
+                isViewingHistoricalRevision={isViewingHistoricalRevision}
               />
             </div>
           )}

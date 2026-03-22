@@ -3,10 +3,29 @@ import type { SaveStatus } from "../../types";
 interface EntryHeaderProps {
   title: string;
   saveStatus: SaveStatus;
+  isDirty: boolean;
+  lastSavedAt: string | null;
   onTitleChange: (value: string) => void;
 }
 
-export function EntryHeader({ title, saveStatus, onTitleChange }: EntryHeaderProps) {
+function formatLastSaved(value: string | null): string {
+  if (!value) {
+    return "Not yet saved";
+  }
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "Saved";
+  }
+  return `Last saved ${date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`;
+}
+
+export function EntryHeader({
+  title,
+  saveStatus,
+  isDirty,
+  lastSavedAt,
+  onTitleChange,
+}: EntryHeaderProps) {
   let statusLabel = "All changes saved";
   if (saveStatus === "saving") {
     statusLabel = "Saving...";
@@ -16,6 +35,9 @@ export function EntryHeader({ title, saveStatus, onTitleChange }: EntryHeaderPro
   }
   if (saveStatus === "conflict") {
     statusLabel = "Newer revision exists - reload latest";
+  }
+  if (isDirty && saveStatus !== "saving") {
+    statusLabel = "Unsaved changes";
   }
 
   return (
@@ -28,6 +50,7 @@ export function EntryHeader({ title, saveStatus, onTitleChange }: EntryHeaderPro
       />
       <div className="entryHeaderActions">
         <span className={`saveStatus ${saveStatus}`}>{statusLabel}</span>
+        <span className="saveMeta">{isDirty ? "Pending autosave..." : formatLastSaved(lastSavedAt)}</span>
         <button type="button" className="secondaryButton">
           Share
         </button>

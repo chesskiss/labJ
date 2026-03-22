@@ -152,3 +152,62 @@ def test_latest_returns_404_for_missing_session(tmp_path: Path):
 
     response = client.get(f"/journal/sessions/{missing_session}/latest")
     assert response.status_code == 404
+    payload = response.json()
+    assert payload["code"] == "session_not_found"
+    assert payload["details"]["session_id"] == missing_session
+
+
+def test_create_entry_conflict_on_base_revision_id_mismatch(tmp_path: Path):
+    client = _client(tmp_path)
+    session_id = str(uuid.uuid4())
+
+    first = client.post(
+        "/journal/entries",
+        json={
+            "session_id": session_id,
+            "title": "Session",
+            "content": "<p>v1</p>",
+            "entry_type": "general",
+            "source": "ui_manual",
+        },
+    )
+    assert first.status_code == 200
+
+    conflict = client.post(
+        "/journal/entries",
+        json={
+            "session_id": session_id,
+            "base_revision_id": str(uuid.uuid4()),
+            "title": "Session",
+            "content": "<p>v2</p>",
+            "entry_type": "general",
+            "source": "ui_manual",
+        },
+    )
+    assert conflict.status_code == 409
+    conflict_payload = conflict.json()
+    assert conflict_payload["code"] == "revision_conflict"
+    assert conflict_payload["details"]["session_id"] == session_id
+    assert (
+        conflict_payload["details"]["current_head_revision_id"]
+        == first.json()["entry_id"]
+    )
+
+
+def test_validation_errors_use_structured_response(tmp_path: Path):
+    client = _client(tmp_path)
+
+    response = client.post(
+        "/journal/entries",
+        json={
+            "session_id": str(uuid.uuid4()),
+            "title": "",
+            "content": "<p>bad</p>",
+            "entry_type": "general",
+            "source": "ui_manual",
+        },
+    )
+    assert response.status_code == 422
+    payload = response.json()
+    assert payload["code"] == "validation_error"
+    assert "errors" in payload["details"]

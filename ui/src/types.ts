@@ -32,6 +32,8 @@ export interface Entry {
   baseRevisionId: string | null;
   title: string;
   updatedAt: string;
+  lastSavedAt: string | null;
+  isDirty: boolean;
   bucket: EntryBucket;
   content: string;
   metadata: EntryMetadata;
