@@ -82,14 +82,18 @@ def parse_transcript(text: str) -> ParsedOutput:
 
     intent_family = _determine_intent_family(user_text)
     if intent_family is None:
-        return _unsupported(user_text)
+        result = _unsupported(user_text)
+        note_candidate = _extract_note_capture_from_mixed_input(user_text)
+        return note_candidate or result
 
     protocol = _extract_protocol_query(user_text)
     if protocol:
         return _build_protocol_plan(user_text, protocol)
 
     if _is_ambiguous_previous_value(lowered):
-        return _build_previous_value_clarification(user_text)
+        result = _build_previous_value_clarification(user_text)
+        note_candidate = _extract_note_capture_from_mixed_input(user_text)
+        return note_candidate or result
 
     plan = _build_action_plan(user_text)
     if plan is not None:
@@ -99,7 +103,9 @@ def parse_transcript(text: str) -> ParsedOutput:
     if note_capture is not None:
         return note_capture
 
-    return _unsupported(user_text)
+    result = _unsupported(user_text)
+    note_candidate = _extract_note_capture_from_mixed_input(user_text)
+    return note_candidate or result
 
 
 def _build_action_plan(user_text: str) -> Optional[ActionPlan]:
@@ -285,6 +291,89 @@ def _build_previous_value_clarification(user_text: str) -> ClarificationNeeded:
             )
         ],
     )
+
+
+def _extract_note_capture_from_mixed_input(user_text: str) -> Optional[NoteCapture]:
+    """Extract note content from mixed utterances that also include non-note text."""
+    chunks = _split_transcript_chunks(user_text)
+    notes: list[NoteCapture] = []
+    ignored_chunks: list[str] = []
+
+    for chunk in chunks:
+        note = _build_note_capture_for_mixed_chunk(chunk)
+        if note is not None:
+            notes.append(note)
+        else:
+            ignored_chunks.append(chunk)
+
+    if not notes:
+        return None
+
+    combined_content = "\n".join(
+        note.note.content.strip() for note in notes if note.note.content.strip()
+    )
+    if not combined_content:
+        return None
+
+    has_observation = any(note.note.note_type == NoteType.OBSERVATION for note in notes)
+    has_value = any(note.note.note_type == NoteType.VALUE for note in notes)
+    note_type = NoteType.GENERAL
+    intent_name = IntentName.RECORD_VALUE
+    confidence = 0.78
+    if has_observation:
+        note_type = NoteType.OBSERVATION
+        intent_name = IntentName.RECORD_OBSERVATION
+        confidence = 0.86
+    elif has_value:
+        note_type = NoteType.VALUE
+        intent_name = IntentName.RECORD_VALUE
+        confidence = 0.82
+
+    notes_list = ["partial_note_capture_from_mixed_input"]
+    if ignored_chunks:
+        preview = "; ".join(ignored_chunks[:2])
+        notes_list.append(f"ignored_non_note_segments={preview}")
+
+    return NoteCapture(
+        user_text=user_text,
+        scope=ScopeInfo(),
+        intent=IntentInfo(name=intent_name, confidence=confidence),
+        note=NotePayload(note_type=note_type, content=combined_content),
+        entities=EntityBundle(free_text_value=combined_content),
+        notes=notes_list,
+    )
+
+
+def _split_transcript_chunks(user_text: str) -> list[str]:
+    parts = re.split(
+        r"(?:[.!?;\n]+|\b(?:and then|then|also|but)\b)",
+        user_text,
+        flags=re.IGNORECASE,
+    )
+    chunks = [part.strip(" ,") for part in parts if part and part.strip(" ,")]
+    if chunks:
+        return chunks
+    stripped = user_text.strip()
+    return [stripped] if stripped else []
+
+
+def _build_note_capture_for_mixed_chunk(chunk: str) -> Optional[NoteCapture]:
+    """Conservative note extractor for mixed utterances.
+
+    Intentionally excludes generic "write it down" chunks to avoid swallowing
+    clarification requests like "take the previous value and write it down".
+    """
+    lowered = chunk.lower()
+    if any(hint in lowered for hint in _OBSERVATION_HINTS):
+        return _build_note_capture(chunk)
+
+    if re.search(
+        r"(write down|record|log)\s+result\s+([0-9]+(?:\.[0-9]+)?)\s*([a-zA-Z]+)?",
+        lowered,
+    ):
+        return _build_note_capture(chunk)
+
+    return None
 
 
 def _not_a_command(user_text: str, reason: str) -> ClarificationNeeded:

@@ -87,3 +87,18 @@ def test_llm_unknown_kind_is_normalized_to_unsupported():
     result = parser.parse("do something else")
     assert result.kind == ResultKind.CLARIFICATION_NEEDED
     assert result.status == ParseStatus.UNSUPPORTED
+
+
+def test_llm_clarification_salvages_note_capture_from_mixed_input():
+    parser = LLMTranscriptParser(
+        api_key="test-key",
+        client=_FakeClient(
+            '{"kind":"clarification_needed","status":"needs_clarification","user_text":"mixed"}'
+        ),
+    )
+    result = parse_transcript_with_fallback(
+        "sample 4 became cloudy after heating. take the previous value and write it down",
+        llm_parser=parser,
+    )
+    assert result.kind == ResultKind.NOTE_CAPTURE
+    assert "sample 4 became cloudy after heating" in result.note.content

@@ -200,14 +200,19 @@ def _run_pipeline(
     text: str,
     session_id: uuid.UUID | None = None,
     request_metadata: dict | None = None,
+    context_window_text: str | None = None,
+    source: str = "direct",
 ) -> tuple[dict, dict, dict]:
-    parsed_model = parse_transcript_with_fallback(text)
+    metadata = dict(request_metadata or {})
+    metadata.setdefault("pipeline_source", source)
+    parsed_model = parse_transcript_with_fallback(
+        text, context_window_text=context_window_text
+    )
     validation_model = validate_parsed_output(parsed_model)
     runtime = get_runtime()
     if session_id is not None:
         runtime.active_session_id = session_id
 
-    metadata = dict(request_metadata or {})
     runtime.note_capture_metadata = metadata
     title = metadata.get("title")
     runtime.note_capture_title = title if isinstance(title, str) else None

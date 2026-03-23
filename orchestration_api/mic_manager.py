@@ -11,7 +11,7 @@ from typing import Any, Callable
 
 from stt.stt import STTClient
 
-PipelineFn = Callable[[str], tuple[dict[str, Any], dict[str, Any], dict[str, Any]]]
+PipelineFn = Callable[..., tuple[dict[str, Any], dict[str, Any], dict[str, Any]]]
 
 DEFAULT_STT_TRANSCRIBE_URL = "http://localhost:8001/transcribe"
 
@@ -32,6 +32,9 @@ class MicSessionManager:
         self._processed_count = 0
         self._enqueued_count = 0
         self._last_transcript_at: str | None = None
+        self._context_chunks: deque[str] = deque(maxlen=12)
+        self._context_summary: str = ""
+        self._max_context_chars = 1500
 
     def start(
         self,
@@ -51,6 +54,7 @@ class MicSessionManager:
             self._queue = queue.Queue()
             self._worker = threading.Thread(target=self._worker_loop, daemon=True)
             self._worker.start()
+            self._reset_context()
 
             client_kwargs: dict[str, Any] = {
                 "on_transcription": self._on_transcription,
@@ -85,6 +89,7 @@ class MicSessionManager:
             self._worker = None
 
         self._append_event({"type": "session_stopped", "full_text": full_text})
+        self._reset_context()
         return True, "stopped", full_text
 
     def status(self) -> dict[str, Any]:
@@ -131,13 +136,21 @@ class MicSessionManager:
                 continue
 
             try:
-                parsed, validation, execution = pipeline(item)
+                context_window = self._compose_context_window(item)
+                try:
+                    parsed, validation, execution = pipeline(
+                        item, context_window_text=context_window, source="mic"
+                    )
+                except TypeError:
+                    parsed, validation, execution = pipeline(item)
                 with self._lock:
                     self._processed_count += 1
+                    self._push_context_chunk(item)
                     self._append_event(
                         {
                             "type": "chunk_processed",
                             "text": item,
+                            "context_window_chars": len(context_window),
                             "parsed": parsed,
                             "validation": validation,
                             "execution": execution,
@@ -156,6 +169,45 @@ class MicSessionManager:
                             },
                         }
                     )
+
+    def _compose_context_window(self, current_chunk: str) -> str:
+        with self._lock:
+            pieces: list[str] = []
+            if self._context_summary:
+                pieces.append(f"[summary] {self._context_summary}")
+            if self._context_chunks:
+                pieces.append("[recent] " + " | ".join(self._context_chunks))
+            pieces.append(f"[current] {current_chunk}")
+            return "\n".join(pieces)
+
+    def _push_context_chunk(self, chunk: str) -> None:
+        self._context_chunks.append(chunk)
+        self._maybe_compress_context()
+
+    def _maybe_compress_context(self) -> None:
+        joined = " ".join(self._context_chunks)
+        summary_and_chunks = f"{self._context_summary} {joined}".strip()
+        if len(summary_and_chunks) <= self._max_context_chars:
+            return
+
+        keep_count = max(4, len(self._context_chunks) // 2)
+        archived = list(self._context_chunks)[:-keep_count]
+        self._context_chunks = deque(
+            list(self._context_chunks)[-keep_count:], maxlen=self._context_chunks.maxlen
+        )
+        archived_text = " ".join(archived).strip()
+        if archived_text:
+            if self._context_summary:
+                self._context_summary = f"{self._context_summary} {archived_text}"[
+                    -self._max_context_chars :
+                ]
+            else:
+                self._context_summary = archived_text[-self._max_context_chars :]
+
+    def _reset_context(self) -> None:
+        with self._lock:
+            self._context_chunks = deque(maxlen=12)
+            self._context_summary = ""
 
     def _append_event(self, event: dict[str, Any]) -> None:
         enriched = {

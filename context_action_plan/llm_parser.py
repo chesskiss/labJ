@@ -49,19 +49,38 @@ class LLMTranscriptParser:
 
     def parse(self, text: str) -> ParsedOutput:
         """Parse text through LLM and validate against ParsedOutput schema."""
+        return self._parse_impl(text=text, context_window_text=None)
+
+    def parse_with_context(
+        self, text: str, context_window_text: str | None
+    ) -> ParsedOutput:
+        """Parse text with rolling context window from live mic sessions."""
+        return self._parse_impl(text=text, context_window_text=context_window_text)
+
+    def _parse_impl(self, text: str, context_window_text: str | None) -> ParsedOutput:
+        """Shared parse implementation used by context/no-context variants."""
         if not self.is_configured or self._client is None:
             raise RuntimeError("LLM parser is not configured")
 
         print(
             f"[LLM] calling chat.completions model={self.model} base_url={self.base_url}"
         )
+        user_payload = text
+        if context_window_text and context_window_text.strip():
+            user_payload = (
+                "Current transcript chunk:\n"
+                f"{text}\n\n"
+                "Rolling context window from previous chunks:\n"
+                f"{context_window_text}"
+            )
+
         completion = self._client.chat.completions.create(
             model=self.model,
             temperature=0,
             response_format={"type": "json_object"},
             messages=[
                 {"role": "system", "content": _system_prompt()},
-                {"role": "user", "content": text},
+                {"role": "user", "content": user_payload},
             ],
         )
         print("[LLM] response received")
@@ -85,14 +104,31 @@ class LLMTranscriptParser:
 
 
 def parse_transcript_with_fallback(
-    text: str, llm_parser: LLMTranscriptParser | None = None
+    text: str,
+    llm_parser: LLMTranscriptParser | None = None,
+    context_window_text: str | None = None,
 ) -> ParsedOutput:
     """Try LLM parsing; always fallback to deterministic parser on any failure."""
     parser = llm_parser or get_default_llm_parser()
     print(f"[LLM] parser configured={parser.is_configured}")
     if parser.is_configured:
         try:
-            return parser.parse(text)
+            if context_window_text and context_window_text.strip():
+                llm_result = parser.parse_with_context(text, context_window_text)
+            else:
+                llm_result = parser.parse(text)
+            if (
+                llm_result.kind == ResultKind.CLARIFICATION_NEEDED
+                and llm_result.status
+                in {ParseStatus.NEEDS_CLARIFICATION, ParseStatus.UNSUPPORTED}
+            ):
+                deterministic_result = parse_transcript(text)
+                if deterministic_result.kind == ResultKind.NOTE_CAPTURE:
+                    deterministic_result.notes.append(
+                        "llm_clarification_salvaged_note_capture"
+                    )
+                    return deterministic_result
+            return llm_result
         except Exception as exc:
             print(
                 "[LLM] parse failed; falling back to deterministic parser: "
@@ -126,6 +162,12 @@ def _system_prompt() -> str:
         "read_calculator_result, add_constant, subtract_constant, multiply_constant, "
         "divide_constant, convert_unit, write_journal_entry, search_protocol, record_observation. "
         "For observational notes emit note_capture. "
+        "Default policy: if any portion of transcript is a lab note/observation/value, "
+        "emit note_capture and keep only journal-relevant content in note.content. "
+        "Ignore chatter/filler/social talk. "
+        "When context window is provided, use it to disambiguate fragmented phrases across chunks, "
+        "but note.content should contain only what should be appended now. "
+        "Do not emit not_a_command if there is usable note content. "
         "For missing info emit clarification_needed+needs_clarification. "
         "For conversational text emit clarification_needed+not_a_command. "
         "For unknown tasks emit clarification_needed+unsupported. "

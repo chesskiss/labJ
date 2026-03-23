@@ -227,8 +227,8 @@ def test_process_audio_stt_failure(tmp_path: Path, monkeypatch):
 def test_process_text_uses_llm_parser_function(tmp_path: Path, monkeypatch):
     client = _client_with_sqlite(tmp_path)
 
-    def _fake_llm_parser(text: str):
-        del text
+    def _fake_llm_parser(text: str, **kwargs):  # noqa: ANN003
+        del text, kwargs
         return NoteCapture(
             user_text="from llm parser",
             intent=IntentInfo(name=IntentName.RECORD_OBSERVATION, confidence=0.91),

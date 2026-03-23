@@ -189,3 +189,12 @@ def test_clarification_needed_is_never_ready():
     result = parse_transcript("take the previous value and write it down")
     assert isinstance(result, ClarificationNeeded)
     assert result.status != ParseStatus.READY
+
+
+def test_mixed_note_and_clarification_salvages_note_capture():
+    result = parse_transcript(
+        "sample 4 became cloudy after heating. take the previous value and write it down"
+    )
+    assert isinstance(result, NoteCapture)
+    assert result.note.content == "sample 4 became cloudy after heating"
+    assert "partial_note_capture_from_mixed_input" in result.notes

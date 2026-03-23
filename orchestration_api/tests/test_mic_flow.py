@@ -117,3 +117,46 @@ def test_mic_processing_failure_does_not_kill_session(tmp_path: Path, monkeypatc
     assert len(failures) >= 1
     assert client.get("/mic/status").json()["running"] is True
     client.post("/mic/stop")
+
+
+def test_mic_context_window_carries_recent_chunks_and_resets_on_stop(
+    tmp_path: Path, monkeypatch
+):
+    monkeypatch.setattr("orchestration_api.mic_manager.STTClient", _FakeSTTClient)
+    client = _client_with_sqlite(tmp_path)
+    client.post("/mic/start", json={})
+
+    captured_contexts: list[str] = []
+
+    def _capture_pipeline(
+        text: str, context_window_text: str | None = None, source: str = "direct"
+    ):
+        del text, source
+        captured_contexts.append(context_window_text or "")
+        return {"kind": "note_capture"}, {"is_valid": True}, {"status": "succeeded"}
+
+    manager = app_module.get_mic_manager()
+    manager._pipeline = _capture_pipeline
+    fake_client = manager._client
+    assert isinstance(fake_client, _FakeSTTClient)
+
+    fake_client.emit("sample 4 became cloudy after heating")
+    fake_client.emit("and then it became clearer")
+    time.sleep(0.15)
+
+    assert len(captured_contexts) >= 2
+    assert "[current] sample 4 became cloudy after heating" in captured_contexts[0]
+    assert "[recent] sample 4 became cloudy after heating" in captured_contexts[1]
+    assert "[current] and then it became clearer" in captured_contexts[1]
+
+    client.post("/mic/stop")
+    client.post("/mic/start", json={})
+    manager = app_module.get_mic_manager()
+    manager._pipeline = _capture_pipeline
+    fake_client = manager._client
+    assert isinstance(fake_client, _FakeSTTClient)
+    fake_client.emit("new session first chunk")
+    time.sleep(0.1)
+    client.post("/mic/stop")
+
+    assert "[recent] sample 4 became cloudy after heating" not in captured_contexts[-1]
