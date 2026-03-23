@@ -110,6 +110,26 @@ def test_note_capture_appends_to_existing_session_content():
     )
 
 
+def test_note_capture_replaces_snapshot_for_mic_pipeline_source():
+    first = parse_transcript("sample 4 became cloudy after heating")
+    second = parse_transcript("sample 4 became clearer after cooling")
+    first_validation = validate_parsed_output(first)
+    second_validation = validate_parsed_output(second)
+    tool = _FakeJournalTool()
+    runtime = MockRuntime(journal_write_tool=tool)
+    runtime.note_capture_metadata = {"pipeline_source": "mic"}
+
+    first_result = execute_validated_output(first, first_validation, runtime)
+    assert first_result.status.value == "succeeded"
+    assert tool.last_content == "sample 4 became cloudy after heating"
+
+    second_result = execute_validated_output(second, second_validation, runtime)
+    assert second_result.status.value == "succeeded"
+    assert tool.last_content == "sample 4 became clearer after cooling"
+    assert second_result.final_output is not None
+    assert second_result.final_output["metadata"]["snapshot_strategy"] == "replace"
+
+
 def test_clarification_not_executed():
     parsed = parse_transcript("take the previous value and write it down")
     validation = validate_parsed_output(parsed)

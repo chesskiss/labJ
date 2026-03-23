@@ -137,6 +137,56 @@ def test_process_text_note_capture_appends_within_session(tmp_path: Path):
     )
 
 
+def test_process_text_note_capture_replaces_with_mic_source(tmp_path: Path):
+    client = _client_with_sqlite(tmp_path)
+    requested_session_id = "44444444-4444-4444-4444-444444444444"
+    requested_session_uuid = uuid.UUID(requested_session_id)
+
+    first = client.post(
+        "/process_text",
+        json={
+            "text": "sample 4 became cloudy after heating",
+            "session_id": requested_session_id,
+            "metadata": {"pipeline_source": "mic"},
+        },
+    )
+    assert first.status_code == 200
+
+    second = client.post(
+        "/process_text",
+        json={
+            "text": "sample 4 became clearer after cooling",
+            "session_id": requested_session_id,
+            "metadata": {"pipeline_source": "mic"},
+        },
+    )
+    assert second.status_code == 200
+
+    db_url = f"sqlite+pysqlite:///{tmp_path / 'orchestrator.sqlite'}"
+    engine = create_engine(db_url, future=True)
+    with Session(engine) as session:
+        rows = (
+            session.execute(
+                select(JournalEntry)
+                .where(JournalEntry.session_id == requested_session_uuid)
+                .order_by(JournalEntry.created_at.asc())
+            )
+            .scalars()
+            .all()
+        )
+        events = (
+            session.execute(select(Event).order_by(Event.created_at.asc()))
+            .scalars()
+            .all()
+        )
+
+    assert len(rows) == 2
+    assert rows[0].content == "sample 4 became cloudy after heating"
+    assert rows[1].content == "sample 4 became clearer after cooling"
+    assert len(events) == 2
+    assert events[-1].metadata_json["snapshot_strategy"] == "replace"
+
+
 def test_process_text_not_a_command(tmp_path: Path):
     client = _client_with_sqlite(tmp_path)
     response = client.post("/process_text", json={"text": "hello how are you"})

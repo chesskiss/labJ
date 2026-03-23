@@ -78,9 +78,15 @@ def _handle_note_capture(
 
     try:
         session_id = _resolve_note_capture_session_id(runtime)
-        latest_content = _get_latest_session_content(runtime, session_id)
-        combined_content = append_note_to_content(latest_content, parsed.note.content)
         metadata = dict(getattr(runtime, "note_capture_metadata", {}) or {})
+        pipeline_source = str(metadata.get("pipeline_source") or "")
+        use_replacement_snapshot = pipeline_source == "mic"
+        latest_content = _get_latest_session_content(runtime, session_id)
+        combined_content = _compose_note_capture_content(
+            latest_content=latest_content,
+            note_content=parsed.note.content,
+            use_replacement_snapshot=use_replacement_snapshot,
+        )
         runtime_title = getattr(runtime, "note_capture_title", None)
         if isinstance(runtime_title, str) and runtime_title.strip():
             metadata.setdefault("title", runtime_title.strip())
@@ -88,6 +94,9 @@ def _handle_note_capture(
         metadata["source"] = "executor_note_capture"
         metadata["intent"] = parsed.intent.name.value
         metadata["status"] = parsed.status.value
+        metadata["snapshot_strategy"] = (
+            "replace" if use_replacement_snapshot else "append"
+        )
         result = runtime.journal_write_tool.write_entry(
             content=combined_content,
             entry_type=parsed.note.note_type.value,
@@ -153,6 +162,19 @@ def _get_latest_session_content(
     if isinstance(content, str):
         return content
     return None
+
+
+def _compose_note_capture_content(
+    latest_content: str | None,
+    note_content: str,
+    use_replacement_snapshot: bool,
+) -> str:
+    if use_replacement_snapshot:
+        replacement = note_content.strip()
+        if replacement:
+            return replacement
+        return (latest_content or "").strip()
+    return append_note_to_content(latest_content, note_content)
 
 
 def execute_action_plan(plan: ActionPlan, runtime: MockRuntime) -> ExecutionResult:
