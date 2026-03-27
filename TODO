@@ -1,5 +1,9 @@
 !Clean this TODO
 
+> Trim context window of LLM (so it won't explode), CODEX instruction:
+given the text from stt, LLM should check if new text that is received can start a new "context window". This will reduce its size. If yes, LLM should append it next, and no longer override the previous chunks
+> make LLM check database of text for additional context if existing input of stt not understood.
+
 Idea - 
 Make the LLM interrupt - when I want to correct something - or need clarification if command wasnt given (for future revisions) 
 
