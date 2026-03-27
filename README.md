@@ -26,22 +26,57 @@ uv sync
 
 # Install frontend dependencies
 cd ui && npm install
+```
 
-# Run orchestration backend
+### Run Locally (4 Terminals)
+
+From repo root (`labJ`), run:
+
+```bash
+# Terminal 1: STT service
+cd stt
+docker compose up --build -d
+curl -X POST http://localhost:8000/mic/start \           
+  -H "Content-Type: application/json" \
+  -d '{"language":"en","stt_api_url":"http://localhost:8001","silence_duration":0.8,"silence_threshold":0.01}'
+
+# Terminal 2: Orchestration API
 uv run uvicorn orchestration_api.app:app --reload --host 0.0.0.0 --port 8000
 
-# Optional: enable LLM parsing (with deterministic fallback)
-export LLM_API_KEY=...
+# Terminal 3: Journal API (journal entries read/write)
+uv run uvicorn journal_api.app:app --reload --host 0.0.0.0 --port 8002
 
-# Run frontend (separate terminal)
-cd ui && npm run dev
+# Terminal 4: UI
+cd ui 
+npm run dev
+```
+
+Then open `http://localhost:5173`.
+
+
+### Stop Run
+```
+STT:
+curl -X POST http://localhost:8000/mic/stop
+docker compose down
+
+Everything else:
+ctrl + C
+```
+
+
+Optional env vars:
+
+```bash
+export GROQ_API_KEY=...
+export LLM_API_KEY=...
 ```
 
 ### Current Runnable Components
 
 ```bash
 # STT docker service
-cd stt/STT-module
+cd stt
 docker compose up --build -d
 
 # Module-level validation (from repo root)

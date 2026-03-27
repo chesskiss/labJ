@@ -26,13 +26,8 @@ interface WorkspaceProps {
   onEditorContentChange: (html: string) => void;
   onEditorBlur: () => void;
   onMetadataChange: (metadata: EntryMetadata) => void;
-  isVoicePanelOpen: boolean;
-  voicePromptDraft: string;
-  isVoiceSending: boolean;
-  onToggleVoicePanel: () => void;
-  onVoicePromptChange: (value: string) => void;
-  onSendVoicePrompt: () => void;
-  onCloseVoicePanel: () => void;
+  voiceMicState: "idle" | "listening" | "processing";
+  onToggleVoiceMic: () => void;
   loadError: string | null;
   saveError: string | null;
   revisionHistory: JournalEntryRecord[];
@@ -56,13 +51,8 @@ export function Workspace({
   onEditorContentChange,
   onEditorBlur,
   onMetadataChange,
-  isVoicePanelOpen,
-  voicePromptDraft,
-  isVoiceSending,
-  onToggleVoicePanel,
-  onVoicePromptChange,
-  onSendVoicePrompt,
-  onCloseVoicePanel,
+  voiceMicState,
+  onToggleVoiceMic,
   loadError,
   saveError,
   revisionHistory,
@@ -158,13 +148,8 @@ export function Workspace({
       </div>
 
       <VoiceCaptureDock
-        isOpen={isVoicePanelOpen}
-        promptDraft={voicePromptDraft}
-        isSending={isVoiceSending}
-        onToggleOpen={onToggleVoicePanel}
-        onPromptChange={onVoicePromptChange}
-        onSendPrompt={onSendVoicePrompt}
-        onClose={onCloseVoicePanel}
+        micState={voiceMicState}
+        onToggleMic={onToggleVoiceMic}
       />
     </section>
   );

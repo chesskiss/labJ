@@ -693,6 +693,16 @@ textarea {
   fill: #1f4f8f;
 }
 
+.voiceDockStatus {
+  background: #ffffff;
+  color: #3f536e;
+  border: 1px solid #c7d7ef;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  box-shadow: 0 8px 20px rgba(16, 43, 80, 0.14);
+}
+
 .voicePromptPanel {
   width: min(380px, calc(100vw - 32px));
   max-height: min(500px, calc(100vh - 110px));

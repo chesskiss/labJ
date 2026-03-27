@@ -110,7 +110,7 @@ def test_note_capture_appends_to_existing_session_content():
     )
 
 
-def test_note_capture_replaces_snapshot_for_mic_pipeline_source():
+def test_note_capture_appends_for_mic_pipeline_source():
     first = parse_transcript("sample 4 became cloudy after heating")
     second = parse_transcript("sample 4 became clearer after cooling")
     first_validation = validate_parsed_output(first)
@@ -125,9 +125,12 @@ def test_note_capture_replaces_snapshot_for_mic_pipeline_source():
 
     second_result = execute_validated_output(second, second_validation, runtime)
     assert second_result.status.value == "succeeded"
-    assert tool.last_content == "sample 4 became clearer after cooling"
+    assert (
+        tool.last_content
+        == "sample 4 became cloudy after heating\nsample 4 became clearer after cooling"
+    )
     assert second_result.final_output is not None
-    assert second_result.final_output["metadata"]["snapshot_strategy"] == "replace"
+    assert second_result.final_output["metadata"]["snapshot_strategy"] == "append"
 
 
 def test_clarification_not_executed():

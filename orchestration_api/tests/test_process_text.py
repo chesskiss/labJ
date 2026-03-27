@@ -137,7 +137,7 @@ def test_process_text_note_capture_appends_within_session(tmp_path: Path):
     )
 
 
-def test_process_text_note_capture_replaces_with_mic_source(tmp_path: Path):
+def test_process_text_note_capture_appends_with_mic_source(tmp_path: Path):
     client = _client_with_sqlite(tmp_path)
     requested_session_id = "44444444-4444-4444-4444-444444444444"
     requested_session_uuid = uuid.UUID(requested_session_id)
@@ -182,9 +182,12 @@ def test_process_text_note_capture_replaces_with_mic_source(tmp_path: Path):
 
     assert len(rows) == 2
     assert rows[0].content == "sample 4 became cloudy after heating"
-    assert rows[1].content == "sample 4 became clearer after cooling"
+    assert (
+        rows[1].content
+        == "sample 4 became cloudy after heating\nsample 4 became clearer after cooling"
+    )
     assert len(events) == 2
-    assert events[-1].metadata_json["snapshot_strategy"] == "replace"
+    assert events[-1].metadata_json["snapshot_strategy"] == "append"
 
 
 def test_process_text_not_a_command(tmp_path: Path):

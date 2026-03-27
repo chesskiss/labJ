@@ -25,6 +25,7 @@ const AUTOSAVE_DELAY_MS = 2000;
 const AUTOSAVE_MAX_ATTEMPTS = 3;
 
 type JournalSource = "ui_manual" | "ui_command";
+type VoiceMicState = "idle" | "listening" | "processing";
 
 function createSessionId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
@@ -49,15 +50,6 @@ function delay(ms: number): Promise<void> {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
   });
-}
-
-function escapeHtml(value: string): string {
-  return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
 }
 
 function toEntryBucket(isoTimestamp: string): EntryBucket {
@@ -172,9 +164,7 @@ export function AppShell() {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [isHydrating, setIsHydrating] = useState<boolean>(true);
 
-  const [isVoicePanelOpen, setIsVoicePanelOpen] = useState<boolean>(false);
-  const [voicePromptDraft, setVoicePromptDraft] = useState<string>("");
-  const [isVoiceSending, setIsVoiceSending] = useState<boolean>(false);
+  const [voiceMicState, setVoiceMicState] = useState<VoiceMicState>("idle");
 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -675,49 +665,13 @@ export function AppShell() {
     editorRef.current?.runToolbarAction(action);
   };
 
-  const handleToggleVoicePanel = () => {
-    setIsVoicePanelOpen((current) => !current);
-  };
-
-  const handleCloseVoicePanel = () => {
-    setIsVoicePanelOpen(false);
-  };
-
-  const handleSendVoicePrompt = async () => {
-    const prompt = voicePromptDraft.trim();
-    if (!prompt.length || isVoiceSending) {
-      return;
-    }
-
-    const current = activeEntryRef.current;
-    if (!current) {
-      return;
-    }
-
-    setIsVoiceSending(true);
-    setVoicePromptDraft("");
-
-    const commandBlock = `<p><strong>Command:</strong> ${escapeHtml(prompt)}</p>`;
-    const updatedEntry: Entry = {
-      ...current,
-      content: `${current.content}${commandBlock}`,
-      updatedAt: "Now",
-      isDirty: true,
-    };
-
-    setEntries((entriesList) =>
-      entriesList.map((entry) => (entry.id === current.id ? updatedEntry : entry))
-    );
-    setSaveStatus("saving");
-    setSaveError(null);
-
-    if (saveDebounceRef.current) {
-      window.clearTimeout(saveDebounceRef.current);
-      saveDebounceRef.current = null;
-    }
-
-    await persistEntry(updatedEntry, "ui_command", { force: true });
-    setIsVoiceSending(false);
+  const handleToggleVoiceMic = () => {
+    setVoiceMicState((current) => {
+      if (current === "processing") {
+        return current;
+      }
+      return current === "listening" ? "idle" : "listening";
+    });
   };
 
   if (!activeEntry) {
@@ -774,15 +728,8 @@ export function AppShell() {
         onEditorContentChange={handleEditorContentChange}
         onEditorBlur={handleEditorBlur}
         onMetadataChange={handleMetadataChange}
-        isVoicePanelOpen={isVoicePanelOpen}
-        voicePromptDraft={voicePromptDraft}
-        isVoiceSending={isVoiceSending}
-        onToggleVoicePanel={handleToggleVoicePanel}
-        onVoicePromptChange={setVoicePromptDraft}
-        onSendVoicePrompt={() => {
-          void handleSendVoicePrompt();
-        }}
-        onCloseVoicePanel={handleCloseVoicePanel}
+        voiceMicState={voiceMicState}
+        onToggleVoiceMic={handleToggleVoiceMic}
         loadError={loadError}
         saveError={saveError}
         revisionHistory={revisionHistory}
