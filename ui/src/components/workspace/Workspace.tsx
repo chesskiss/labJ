@@ -28,6 +28,8 @@ interface WorkspaceProps {
   onMetadataChange: (metadata: EntryMetadata) => void;
   voiceMicState: "idle" | "listening" | "processing";
   onToggleVoiceMic: () => void;
+  voiceTranscriptPreview: string | null;
+  voiceErrorMessage: string | null;
   loadError: string | null;
   saveError: string | null;
   revisionHistory: JournalEntryRecord[];
@@ -53,6 +55,8 @@ export function Workspace({
   onMetadataChange,
   voiceMicState,
   onToggleVoiceMic,
+  voiceTranscriptPreview,
+  voiceErrorMessage,
   loadError,
   saveError,
   revisionHistory,
@@ -150,6 +154,8 @@ export function Workspace({
       <VoiceCaptureDock
         micState={voiceMicState}
         onToggleMic={onToggleVoiceMic}
+        transcriptPreview={voiceTranscriptPreview}
+        errorMessage={voiceErrorMessage}
       />
     </section>
   );

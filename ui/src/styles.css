@@ -703,6 +703,27 @@ textarea {
   box-shadow: 0 8px 20px rgba(16, 43, 80, 0.14);
 }
 
+.voiceDockPreview,
+.voiceDockError {
+  width: min(320px, calc(100vw - 28px));
+  border-radius: 10px;
+  padding: 8px 10px;
+  font-size: 12px;
+  box-shadow: 0 8px 20px rgba(16, 43, 80, 0.14);
+}
+
+.voiceDockPreview {
+  background: #ffffff;
+  color: #2b3f5b;
+  border: 1px solid #c7d7ef;
+}
+
+.voiceDockError {
+  background: #ffecef;
+  color: #8f1d2a;
+  border: 1px solid #f1c1c7;
+}
+
 .voicePromptPanel {
   width: min(380px, calc(100vw - 32px));
   max-height: min(500px, calc(100vh - 110px));

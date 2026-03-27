@@ -6,6 +6,7 @@ import {
   fetchSessionSummaries,
   type JournalEntryRecord,
 } from "../api/journalApi";
+import { micStart, micStop } from "../api/orchestrationApi";
 import { initialEntries } from "../data/mockData";
 import type {
   AppSection,
@@ -165,6 +166,8 @@ export function AppShell() {
   const [isHydrating, setIsHydrating] = useState<boolean>(true);
 
   const [voiceMicState, setVoiceMicState] = useState<VoiceMicState>("idle");
+  const [voiceTranscriptPreview, setVoiceTranscriptPreview] = useState<string | null>(null);
+  const [voiceErrorMessage, setVoiceErrorMessage] = useState<string | null>(null);
 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -666,12 +669,75 @@ export function AppShell() {
   };
 
   const handleToggleVoiceMic = () => {
-    setVoiceMicState((current) => {
-      if (current === "processing") {
-        return current;
+    if (voiceMicState === "processing") {
+      return;
+    }
+
+    if (voiceMicState === "listening") {
+      setVoiceMicState("processing");
+      setVoiceErrorMessage(null);
+      void (async () => {
+        try {
+          const stopResult = await micStop();
+          const fullText = stopResult.full_text?.trim() ?? "";
+          setVoiceTranscriptPreview(fullText.length ? fullText : null);
+
+          const active = activeEntryRef.current;
+          if (active?.sessionId) {
+            const latest = await fetchLatestSessionEntry(active.sessionId);
+            const updatedEntry: Entry = {
+              ...active,
+              title: latest.title,
+              content: latest.content,
+              headRevisionId: latest.entry_id,
+              baseRevisionId: latest.entry_id,
+              updatedAt: formatUpdatedAt(latest.created_at),
+              lastSavedAt: latest.created_at,
+              isDirty: false,
+              bucket: toEntryBucket(latest.created_at),
+              metadata: normalizeEntryMetadata(latest.metadata, latest.created_at),
+              createdBy: latest.created_by,
+              entryType: latest.entry_type,
+            };
+
+            setEntries((current) =>
+              current.map((entry) => (entry.id === active.id ? updatedEntry : entry))
+            );
+            savedSignatureRef.current.set(active.sessionId, entrySignature(updatedEntry));
+            setLoadedRevisionId(latest.entry_id);
+            setSaveStatus("saved");
+            setSaveError(null);
+            void refreshRevisionHistory(active.sessionId);
+          }
+        } catch (error) {
+          const message =
+            error instanceof Error ? error.message : "Failed to stop mic session.";
+          setVoiceErrorMessage(message);
+        } finally {
+          setVoiceMicState("idle");
+        }
+      })();
+      return;
+    }
+
+    setVoiceErrorMessage(null);
+    setVoiceTranscriptPreview(null);
+    void (async () => {
+      try {
+        await micStart({
+          language: "en",
+          stt_api_url: "http://localhost:8001",
+          silence_duration: 0.8,
+          silence_threshold: 0.01,
+        });
+        setVoiceMicState("listening");
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to start mic session.";
+        setVoiceErrorMessage(message);
+        setVoiceMicState("idle");
       }
-      return current === "listening" ? "idle" : "listening";
-    });
+    })();
   };
 
   if (!activeEntry) {
@@ -730,6 +796,8 @@ export function AppShell() {
         onMetadataChange={handleMetadataChange}
         voiceMicState={voiceMicState}
         onToggleVoiceMic={handleToggleVoiceMic}
+        voiceTranscriptPreview={voiceTranscriptPreview}
+        voiceErrorMessage={voiceErrorMessage}
         loadError={loadError}
         saveError={saveError}
         revisionHistory={revisionHistory}

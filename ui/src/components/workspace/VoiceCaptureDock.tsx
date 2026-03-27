@@ -1,11 +1,15 @@
 interface VoiceCaptureDockProps {
   micState: "idle" | "listening" | "processing";
   onToggleMic: () => void;
+  transcriptPreview: string | null;
+  errorMessage: string | null;
 }
 
 export function VoiceCaptureDock({
   micState,
   onToggleMic,
+  transcriptPreview,
+  errorMessage,
 }: VoiceCaptureDockProps) {
   const label =
     micState === "listening"
@@ -29,6 +33,12 @@ export function VoiceCaptureDock({
       <div className="voiceDockStatus" role="status" aria-live="polite">
         Mic: {micState}
       </div>
+      {transcriptPreview ? <div className="voiceDockPreview">{transcriptPreview}</div> : null}
+      {errorMessage ? (
+        <div className="voiceDockError" role="status" aria-live="polite">
+          {errorMessage}
+        </div>
+      ) : null}
     </section>
   );
 }

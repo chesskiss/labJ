@@ -7,6 +7,7 @@ import uuid
 
 from fastapi import FastAPI, HTTPException
 from fastapi import File, Query, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 import requests
 
@@ -33,6 +34,20 @@ from plan_validation.validator import validate_parsed_output
 load_dotenv()
 
 app = FastAPI(title="labJ Orchestration API")
+
+cors_origins = os.getenv("ORCHESTRATION_API_CORS_ORIGINS", "*").strip()
+allow_origins = (
+    [origin.strip() for origin in cors_origins.split(",") if origin.strip()]
+    if cors_origins != "*"
+    else ["*"]
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allow_origins,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health", response_model=HealthResponse)
