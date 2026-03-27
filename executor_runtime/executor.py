@@ -80,7 +80,19 @@ def _handle_note_capture(
         session_id = _resolve_note_capture_session_id(runtime)
         metadata = dict(getattr(runtime, "note_capture_metadata", {}) or {})
         latest_content = _get_latest_session_content(runtime, session_id)
-        combined_content = append_note_to_content(latest_content, parsed.note.content)
+        if _should_rewrite_mic_draft(runtime, metadata):
+            draft_base_content = _resolve_mic_draft_base_content(
+                runtime, latest_content
+            )
+            combined_content = append_note_to_content(
+                draft_base_content, parsed.note.content
+            )
+            metadata["snapshot_strategy"] = "mic_draft_rewrite"
+        else:
+            combined_content = append_note_to_content(
+                latest_content, parsed.note.content
+            )
+            metadata["snapshot_strategy"] = "append"
         runtime_title = getattr(runtime, "note_capture_title", None)
         if isinstance(runtime_title, str) and runtime_title.strip():
             metadata.setdefault("title", runtime_title.strip())
@@ -88,7 +100,6 @@ def _handle_note_capture(
         metadata["source"] = "executor_note_capture"
         metadata["intent"] = parsed.intent.name.value
         metadata["status"] = parsed.status.value
-        metadata["snapshot_strategy"] = "append"
         result = runtime.journal_write_tool.write_entry(
             content=combined_content,
             entry_type=parsed.note.note_type.value,
@@ -154,6 +165,22 @@ def _get_latest_session_content(
     if isinstance(content, str):
         return content
     return None
+
+
+def _should_rewrite_mic_draft(
+    runtime: MockRuntime, metadata: dict[str, object]
+) -> bool:
+    pipeline_source = str(metadata.get("pipeline_source") or "")
+    return pipeline_source == "mic" and getattr(runtime, "mic_draft_active", False)
+
+
+def _resolve_mic_draft_base_content(
+    runtime: MockRuntime, latest_content: str | None
+) -> str | None:
+    if not getattr(runtime, "mic_draft_base_initialized", False):
+        runtime.mic_draft_base_content = latest_content
+        runtime.mic_draft_base_initialized = True
+    return runtime.mic_draft_base_content
 
 
 def execute_action_plan(plan: ActionPlan, runtime: MockRuntime) -> ExecutionResult:

@@ -133,6 +133,40 @@ def test_note_capture_appends_for_mic_pipeline_source():
     assert second_result.final_output["metadata"]["snapshot_strategy"] == "append"
 
 
+def test_note_capture_rewrites_active_mic_draft_on_fixed_base():
+    first = parse_transcript("sample 4 became cloudy after heating")
+    second = parse_transcript(
+        "sample 4 became cloudy after heating and then became clearer"
+    )
+    first_validation = validate_parsed_output(first)
+    second_validation = validate_parsed_output(second)
+    tool = _FakeJournalTool()
+    runtime = MockRuntime(journal_write_tool=tool)
+    runtime.note_capture_metadata = {"pipeline_source": "mic"}
+    runtime.mic_draft_active = True
+
+    first_result = execute_validated_output(first, first_validation, runtime)
+    assert first_result.status.value == "succeeded"
+    assert tool.last_content == "sample 4 became cloudy after heating"
+    assert first_result.final_output is not None
+    assert (
+        first_result.final_output["metadata"]["snapshot_strategy"]
+        == "mic_draft_rewrite"
+    )
+
+    second_result = execute_validated_output(second, second_validation, runtime)
+    assert second_result.status.value == "succeeded"
+    assert (
+        tool.last_content
+        == "sample 4 became cloudy after heating and then became clearer"
+    )
+    assert second_result.final_output is not None
+    assert (
+        second_result.final_output["metadata"]["snapshot_strategy"]
+        == "mic_draft_rewrite"
+    )
+
+
 def test_clarification_not_executed():
     parsed = parse_transcript("take the previous value and write it down")
     validation = validate_parsed_output(parsed)

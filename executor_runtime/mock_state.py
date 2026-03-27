@@ -20,3 +20,6 @@ class MockRuntime:
     journal_write_tool: Any | None = None
     note_capture_title: str | None = None
     note_capture_metadata: dict[str, Any] = field(default_factory=dict)
+    mic_draft_active: bool = False
+    mic_draft_base_content: str | None = None
+    mic_draft_base_initialized: bool = False

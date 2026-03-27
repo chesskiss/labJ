@@ -48,6 +48,9 @@ def test_mic_lifecycle_idempotent(tmp_path: Path, monkeypatch):
     assert start.status_code == 200
     assert start.json()["ok"] is True
     assert start.json()["running"] is True
+    runtime = app_module.get_runtime()
+    assert runtime.mic_draft_active is True
+    assert runtime.mic_draft_base_initialized is False
 
     start_again = client.post("/mic/start", json={})
     assert start_again.status_code == 200
@@ -61,6 +64,9 @@ def test_mic_lifecycle_idempotent(tmp_path: Path, monkeypatch):
     assert stop.status_code == 200
     assert stop.json()["ok"] is True
     assert stop.json()["running"] is False
+    runtime = app_module.get_runtime()
+    assert runtime.mic_draft_active is False
+    assert runtime.mic_draft_base_initialized is False
 
     stop_again = client.post("/mic/stop")
     assert stop_again.status_code == 200

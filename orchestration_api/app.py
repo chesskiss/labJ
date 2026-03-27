@@ -100,6 +100,10 @@ def runtime_state() -> RuntimeStateResponse:
 
 @app.post("/mic/start", response_model=MicControlResponse)
 def mic_start(payload: MicStartRequest) -> MicControlResponse:
+    runtime = get_runtime()
+    runtime.mic_draft_active = True
+    runtime.mic_draft_base_content = None
+    runtime.mic_draft_base_initialized = False
     manager = get_mic_manager()
     ok, message = manager.start(
         _run_pipeline,
@@ -115,6 +119,10 @@ def mic_start(payload: MicStartRequest) -> MicControlResponse:
 
 @app.post("/mic/stop", response_model=MicControlResponse)
 def mic_stop() -> MicControlResponse:
+    runtime = get_runtime()
+    runtime.mic_draft_active = False
+    runtime.mic_draft_base_content = None
+    runtime.mic_draft_base_initialized = False
     manager = get_mic_manager()
     ok, message, full_text = manager.stop()
     return MicControlResponse(
