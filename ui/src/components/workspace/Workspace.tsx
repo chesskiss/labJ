@@ -40,6 +40,10 @@ interface WorkspaceProps {
   onLoadRevision: (revision: JournalEntryRecord) => void;
   onLoadLatestRevision: () => void;
   isViewingHistoricalRevision: boolean;
+  hasPendingRemoteUpdate: boolean;
+  pendingRemoteUpdatedAt: string | null;
+  onLoadPendingRemoteLatest: () => void;
+  onSaveThenRefresh: () => void;
 }
 
 export function Workspace({
@@ -67,6 +71,10 @@ export function Workspace({
   onLoadRevision,
   onLoadLatestRevision,
   isViewingHistoricalRevision,
+  hasPendingRemoteUpdate,
+  pendingRemoteUpdatedAt,
+  onLoadPendingRemoteLatest,
+  onSaveThenRefresh,
 }: WorkspaceProps) {
   return (
     <section className="workspace" aria-label="Notebook workspace">
@@ -101,6 +109,26 @@ export function Workspace({
               You are editing an older revision, not the current head.
               <button type="button" className="secondaryButton noticeAction" onClick={onLoadLatestRevision}>
                 Load latest
+              </button>
+            </div>
+          )}
+          {hasPendingRemoteUpdate && (
+            <div className="workspaceNotice warning" role="status" aria-live="polite">
+              New remote update available{pendingRemoteUpdatedAt ? ` (${pendingRemoteUpdatedAt})` : ""}.
+              Save or load latest to apply.
+              <button
+                type="button"
+                className="secondaryButton noticeAction"
+                onClick={onLoadPendingRemoteLatest}
+              >
+                Load latest
+              </button>
+              <button
+                type="button"
+                className="secondaryButton noticeAction"
+                onClick={onSaveThenRefresh}
+              >
+                Save then refresh
               </button>
             </div>
           )}

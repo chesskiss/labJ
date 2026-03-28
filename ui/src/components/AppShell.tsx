@@ -24,6 +24,7 @@ import type { JournalEditorHandle } from "./workspace/JournalEditor";
 
 const AUTOSAVE_DELAY_MS = 2000;
 const AUTOSAVE_MAX_ATTEMPTS = 3;
+const LIVE_REFRESH_INTERVAL_MS = 1000;
 
 type JournalSource = "ui_manual" | "ui_command";
 type VoiceMicState = "idle" | "listening" | "processing";
@@ -175,12 +176,15 @@ export function AppShell() {
   const [isHistoryLoading, setIsHistoryLoading] = useState<boolean>(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [loadedRevisionId, setLoadedRevisionId] = useState<string | null>(null);
+  const [pendingRemoteRevisionId, setPendingRemoteRevisionId] = useState<string | null>(null);
+  const [pendingRemoteUpdatedAt, setPendingRemoteUpdatedAt] = useState<string | null>(null);
 
   const editorRef = useRef<JournalEditorHandle | null>(null);
   const saveDebounceRef = useRef<number | null>(null);
   const savedSignatureRef = useRef<Map<string, string>>(new Map());
   const activeEntryRef = useRef<Entry | null>(null);
   const historyRequestRef = useRef<number>(0);
+  const liveRefreshInFlightRef = useRef<boolean>(false);
 
   const activeEntry = useMemo(
     () => entries.find((entry) => entry.id === activeEntryId) ?? null,
@@ -253,6 +257,63 @@ export function AppShell() {
       }
     }
   }, []);
+
+  const applyLatestToActiveEntry = useCallback(
+    (
+      latest: JournalEntryRecord,
+      options?: {
+        overwriteContent?: boolean;
+        setLoadedRevision?: boolean;
+      }
+    ) => {
+      const current = activeEntryRef.current;
+      if (!current || current.sessionId !== latest.session_id) {
+        return;
+      }
+
+      const overwriteContent = options?.overwriteContent ?? true;
+      const setLoadedRevision = options?.setLoadedRevision ?? overwriteContent;
+
+      setEntries((items) =>
+        items.map((item) => {
+          if (item.id !== current.id) {
+            return item;
+          }
+          return {
+            ...item,
+            title: latest.title,
+            content: overwriteContent ? latest.content : item.content,
+            headRevisionId: latest.entry_id,
+            baseRevisionId: overwriteContent ? latest.entry_id : item.baseRevisionId,
+            updatedAt: formatUpdatedAt(latest.created_at),
+            lastSavedAt: latest.created_at,
+            isDirty: overwriteContent ? false : item.isDirty,
+            bucket: toEntryBucket(latest.created_at),
+            metadata: normalizeEntryMetadata(latest.metadata, latest.created_at),
+            createdBy: latest.created_by,
+            entryType: latest.entry_type,
+          };
+        })
+      );
+
+      if (overwriteContent) {
+        savedSignatureRef.current.set(current.sessionId, entrySignature({
+          ...current,
+          title: latest.title,
+          content: latest.content,
+          metadata: normalizeEntryMetadata(latest.metadata, latest.created_at),
+        }));
+      }
+      if (setLoadedRevision) {
+        setLoadedRevisionId(latest.entry_id);
+      }
+      setSaveStatus("saved");
+      setSaveError(null);
+      setPendingRemoteRevisionId(null);
+      setPendingRemoteUpdatedAt(null);
+    },
+    []
+  );
 
   const persistEntry = useCallback(
     async (
@@ -387,10 +448,11 @@ export function AppShell() {
 
       const current = activeEntryRef.current;
       if (!current) {
-        return;
+        return false;
       }
 
-      await persistEntry(current, "ui_manual", { keepalive: options?.keepalive });
+      const saved = await persistEntry(current, "ui_manual", { keepalive: options?.keepalive });
+      return saved;
     },
     [persistEntry]
   );
@@ -506,9 +568,13 @@ export function AppShell() {
       setRevisionHistory([]);
       setHistoryError(null);
       setIsHistoryLoading(false);
+      setPendingRemoteRevisionId(null);
+      setPendingRemoteUpdatedAt(null);
       return;
     }
     setLoadedRevisionId(activeEntry.baseRevisionId);
+    setPendingRemoteRevisionId(null);
+    setPendingRemoteUpdatedAt(null);
     void refreshRevisionHistory(activeSessionId);
   }, [activeEntry?.baseRevisionId, activeEntry?.sessionId, refreshRevisionHistory]);
 
@@ -522,6 +588,70 @@ export function AppShell() {
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, [flushActiveAutosave]);
+
+  useEffect(() => {
+    if (isHydrating || !activeEntry?.sessionId) {
+      return;
+    }
+
+    const intervalId = window.setInterval(() => {
+      if (liveRefreshInFlightRef.current) {
+        return;
+      }
+      if (saveStatus === "saving" || voiceMicState === "processing") {
+        return;
+      }
+
+      const current = activeEntryRef.current;
+      if (!current?.sessionId) {
+        return;
+      }
+
+      liveRefreshInFlightRef.current = true;
+      void (async () => {
+        try {
+          const latest = await fetchLatestSessionEntry(current.sessionId);
+          const latestRevisionId = latest.entry_id;
+          const currentHead = current.headRevisionId;
+          if (!latestRevisionId || latestRevisionId === currentHead) {
+            return;
+          }
+
+          const isViewingHistorical =
+            !!loadedRevisionId && !!current.headRevisionId && loadedRevisionId !== current.headRevisionId;
+
+          if (current.isDirty) {
+            setPendingRemoteRevisionId(latestRevisionId);
+            setPendingRemoteUpdatedAt(formatUpdatedAt(latest.created_at));
+            return;
+          }
+
+          applyLatestToActiveEntry(latest, {
+            overwriteContent: !isViewingHistorical,
+            setLoadedRevision: !isViewingHistorical,
+          });
+          void refreshRevisionHistory(current.sessionId);
+        } catch {
+          // silent background polling failure
+        } finally {
+          liveRefreshInFlightRef.current = false;
+        }
+      })();
+    }, LIVE_REFRESH_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [
+    activeEntry?.sessionId,
+    applyLatestToActiveEntry,
+    fetchLatestSessionEntry,
+    isHydrating,
+    loadedRevisionId,
+    refreshRevisionHistory,
+    saveStatus,
+    voiceMicState,
+  ]);
 
   useEffect(() => {
     if (!entries.length) {
@@ -601,12 +731,22 @@ export function AppShell() {
   };
 
   const handleEditorBlur = () => {
-    void flushActiveAutosave();
+    void (async () => {
+      const saved = await flushActiveAutosave();
+      if (saved && pendingRemoteRevisionId) {
+        await handleLoadLatestRevision();
+      }
+    })();
   };
 
   const handleModeChange = (mode: WorkspaceMode) => {
     if (workspaceMode === "journal" && mode !== "journal") {
-      void flushActiveAutosave();
+      void (async () => {
+        const saved = await flushActiveAutosave();
+        if (saved && pendingRemoteRevisionId) {
+          await handleLoadLatestRevision();
+        }
+      })();
     }
     setWorkspaceMode(mode);
   };
@@ -653,12 +793,28 @@ export function AppShell() {
     try {
       const latest = await fetchLatestSessionEntry(current.sessionId);
       handleLoadRevision(latest);
+      setPendingRemoteRevisionId(null);
+      setPendingRemoteUpdatedAt(null);
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Failed to load latest revision.";
       setSaveError(message);
     }
   }, [handleLoadRevision, revisionHistory]);
+
+  const handleLoadPendingRemoteLatest = useCallback(() => {
+    void handleLoadLatestRevision();
+  }, [handleLoadLatestRevision]);
+
+  const handleSaveThenRefresh = useCallback(() => {
+    void (async () => {
+      const saved = await flushActiveAutosave();
+      if (!saved) {
+        return;
+      }
+      await handleLoadLatestRevision();
+    })();
+  }, [flushActiveAutosave, handleLoadLatestRevision]);
 
   const handleToolbarAction = (action: ToolbarAction) => {
     if (workspaceMode !== "journal") {
@@ -707,6 +863,8 @@ export function AppShell() {
             setLoadedRevisionId(latest.entry_id);
             setSaveStatus("saved");
             setSaveError(null);
+            setPendingRemoteRevisionId(null);
+            setPendingRemoteUpdatedAt(null);
             void refreshRevisionHistory(active.sessionId);
           }
         } catch (error) {
@@ -810,6 +968,10 @@ export function AppShell() {
           void handleLoadLatestRevision();
         }}
         isViewingHistoricalRevision={isViewingHistoricalRevision}
+        hasPendingRemoteUpdate={Boolean(pendingRemoteRevisionId)}
+        pendingRemoteUpdatedAt={pendingRemoteUpdatedAt}
+        onLoadPendingRemoteLatest={handleLoadPendingRemoteLatest}
+        onSaveThenRefresh={handleSaveThenRefresh}
       />
     </div>
   );
