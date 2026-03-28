@@ -1,5 +1,7 @@
 const ORCHESTRATION_API_BASE_URL =
-  (import.meta.env.VITE_ORCHESTRATION_API_URL as string | undefined) ?? "http://localhost:8000";
+  (import.meta.env.VITE_ORCHESTRATION_API_URL as string | undefined) ?? "/api/orch";
+const STT_API_URL_FOR_MIC =
+  (import.meta.env.VITE_STT_API_URL as string | undefined) ?? "http://localhost:8001";
 
 function buildUrl(path: string): string {
   const normalizedBase = ORCHESTRATION_API_BASE_URL.replace(/\/$/, "");
@@ -51,7 +53,7 @@ async function parseOrchestrationResponse<T>(response: Response): Promise<T> {
 export async function micStart(
   payload: MicStartRequest = {
     language: "en",
-    stt_api_url: "http://localhost:8001",
+    stt_api_url: STT_API_URL_FOR_MIC,
     silence_duration: 0.8,
     silence_threshold: 0.01,
   }

@@ -13,64 +13,89 @@ A JARVIS-like AI assistant for hands-free lab journaling with voice commands, de
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Python 3.10+
-- Node.js 18+
-- uv (Python package manager)
+### Option 0: Desktop App (Electron, no Docker runtime)
 
-### Installation
+This is the recommended partner-facing runtime for Windows/macOS.
 
 ```bash
-# Install Python dependencies
-uv sync
+cd desktop
+npm install
+npm run build:ui
+npm start
+```
 
-# Install frontend dependencies
+Windows package build:
+
+```bash
+cd desktop
+npm install
+npm run dist:win
+npm run dist:mac
+```
+
+Desktop details: `desktop/README.md`
+
+One-click installer build launchers:
+- Windows: double-click `Build Windows Installer.bat`
+- macOS: double-click `Build macOS Installer.command`
+
+One-click local desktop launcher on macOS:
+- double-click `Run LabJ macOS.command`
+
+### Option A: Docker Stack (dev/ops path)
+
+From repo root (`labJ`):
+
+```bash
+cp launch/.env.full.example launch/.env.full
+docker compose --env-file launch/.env.full -f launch/docker-compose.full.yml up --build -d
+```
+
+Open `http://localhost:5173`.
+
+Stop:
+
+```bash
+docker compose --env-file launch/.env.full -f launch/docker-compose.full.yml down
+```
+
+### Option B: Local Dev (4 terminals)
+
+Prerequisites:
+- Python 3.10+
+- Node.js 18+
+- `uv`
+
+Install once:
+
+```bash
+uv sync
 cd ui && npm install
 ```
 
-### Run Locally (4 Terminals)
-
-From repo root (`labJ`), run:
+Run services:
 
 ```bash
-# Terminal 1: STT service
+# Terminal 1: STT service (Docker)
 cd stt
 docker compose up --build -d
-curl -X POST http://localhost:8000/mic/start \           
-  -H "Content-Type: application/json" \
-  -d '{"language":"en","stt_api_url":"http://localhost:8001","silence_duration":0.8,"silence_threshold":0.01}'
 
 # Terminal 2: Orchestration API
 uv run uvicorn orchestration_api.app:app --reload --host 0.0.0.0 --port 8000
 
-# Terminal 3: Journal API (journal entries read/write)
+# Terminal 3: Journal API
 uv run uvicorn journal_api.app:app --reload --host 0.0.0.0 --port 8002
 
 # Terminal 4: UI
-cd ui 
+cd ui
 npm run dev
 ```
 
-Then open `http://localhost:5173`.
+Open `http://localhost:5173`.
 
-
-### Stop Run
-```
-STT:
-curl -X POST http://localhost:8000/mic/stop
-docker compose down
-
-Everything else:
-ctrl + C
-```
-
-
-Optional env vars:
-
-```bash
-export GROQ_API_KEY=...
-export LLM_API_KEY=...
-```
+Voice capture:
+- Click the mic icon in UI to start (`/mic/start`).
+- Click again to stop (`/mic/stop`).
 
 ### Current Runnable Components
 

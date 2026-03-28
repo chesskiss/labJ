@@ -1,0 +1,57 @@
+services:
+  ui:
+    build:
+      context: ..
+      dockerfile: ui/Dockerfile.release
+      args:
+        VITE_JOURNAL_API_URL: ${VITE_JOURNAL_API_URL:-/api/journal}
+        VITE_JOURNAL_API_DEBUG: ${VITE_JOURNAL_API_DEBUG:-false}
+        VITE_ORCHESTRATION_API_URL: ${VITE_ORCHESTRATION_API_URL:-/api/orch}
+        VITE_STT_API_URL: ${VITE_STT_API_URL:-http://stt:8000}
+    ports:
+      - "${UI_PORT:-5173}:80"
+    depends_on:
+      - journal_api
+      - orchestration_api
+
+  journal_api:
+    build:
+      context: ..
+      dockerfile: launch/Dockerfile.backend
+    command: uvicorn journal_api.app:app --host 0.0.0.0 --port 8002
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite+pysqlite:////app/data/journal.sqlite}
+      JOURNAL_API_CORS_ORIGINS: ${JOURNAL_API_CORS_ORIGINS:-*}
+    ports:
+      - "${JOURNAL_API_PORT:-8002}:8002"
+    volumes:
+      - ../data:/app/data
+
+  orchestration_api:
+    build:
+      context: ..
+      dockerfile: launch/Dockerfile.backend
+    command: uvicorn orchestration_api.app:app --host 0.0.0.0 --port 8000
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite+pysqlite:////app/data/journal.sqlite}
+      STT_API_URL: ${STT_API_URL:-http://stt:8000/transcribe}
+      ORCHESTRATION_API_CORS_ORIGINS: ${ORCHESTRATION_API_CORS_ORIGINS:-*}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+    ports:
+      - "${ORCHESTRATION_API_PORT:-8000}:8000"
+    volumes:
+      - ../data:/app/data
+    depends_on:
+      - journal_api
+      - stt
+
+  stt:
+    build:
+      context: ../stt
+      dockerfile: Dockerfile
+    ports:
+      - "${STT_PORT:-8001}:8000"
+    environment:
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+

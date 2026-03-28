@@ -1,0 +1,77 @@
+{
+  "name": "labj-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "main": "main.cjs",
+  "scripts": {
+    "build:ui": "node ./scripts/build-ui.mjs",
+    "prepare:runtime": "node ./scripts/prepare-runtime.mjs",
+    "start": "electron .",
+    "dist:win": "npm run build:ui && npm run prepare:runtime && electron-builder --win --x64 --publish never",
+    "dist:mac": "npm run build:ui && npm run prepare:runtime && electron-builder --mac --publish never",
+    "dist:all": "npm run build:ui && npm run prepare:runtime && electron-builder --win --x64 --mac --publish never"
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.labj.desktop",
+    "productName": "LabJ",
+    "directories": {
+      "output": "release"
+    },
+    "artifactName": "${productName}-${version}-${os}-${arch}.${ext}",
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "serviceSupervisor.cjs"
+    ],
+    "extraResources": [
+      {
+        "from": "runtime",
+        "to": "labj_runtime",
+        "filter": [
+          ".venv/**"
+        ]
+      },
+      {
+        "from": "../ui/dist",
+        "to": "labj_ui"
+      },
+      {
+        "from": "../data",
+        "to": "labj_data"
+      },
+      {
+        "from": "../.env",
+        "to": "labj_env/.env"
+      },
+      {
+        "from": "..",
+        "to": "labj_backend_src",
+        "filter": [
+          "orchestration_api/**",
+          "stt/**",
+          "journal_api/**",
+          "context_action_plan/**",
+          "plan_validation/**",
+          "executor_runtime/**",
+          "db/**",
+          "tools/**",
+          "config.py"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false
+    }
+  }
+}

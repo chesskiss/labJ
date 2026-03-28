@@ -1,5 +1,5 @@
 const JOURNAL_API_BASE_URL =
-  (import.meta.env.VITE_JOURNAL_API_URL as string | undefined) ?? "http://localhost:8002";
+  (import.meta.env.VITE_JOURNAL_API_URL as string | undefined) ?? "/api/journal";
 
 const JOURNAL_API_DEBUG =
   (import.meta.env.VITE_JOURNAL_API_DEBUG as string | undefined) === "true" ||

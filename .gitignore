@@ -8,6 +8,7 @@ venv/
 .env
 .env.local
 .env.*.local
+launch/.env.full
 .venv/
 */venv/
 */.venv/
