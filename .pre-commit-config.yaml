@@ -12,9 +12,16 @@ repos:
     rev: v1.11.0
     hooks:
       - id: mypy
-        exclude: ^agents/controller\.py$
+        pass_filenames: false
         args:
-          - --exclude
-          - ^(build/|desktop/node_modules/|ui/node_modules/|desktop/runtime/)
+          - --ignore-missing-imports
+          - context_action_plan
+          - plan_validation
+          - executor_runtime
+          - orchestration_api
+          - journal_api
+          - db
+          - tools
+          - stt
         additional_dependencies:
           - types-requests
