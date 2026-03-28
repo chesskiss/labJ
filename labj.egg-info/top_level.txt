@@ -2,8 +2,10 @@ archive
 context_action_plan
 data
 db
+desktop
 executor_runtime
 journal_api
+launch
 mock_runtime_contract
 orchestration_api
 plan_validation

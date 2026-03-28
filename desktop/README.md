@@ -58,4 +58,5 @@ Artifacts are written to `desktop/release/`.
 
 ## Secrets / .env
 - Installer flow uses existing repo `.env` and bundles it in app resources.
-- No key-entry prompt is shown in desktop app.
+- If `LLM_API_KEY` is empty or missing, desktop startup prompts for it.
+- Entered key is applied immediately and persisted back to `.env` when writable.

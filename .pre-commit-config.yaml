@@ -13,5 +13,8 @@ repos:
     hooks:
       - id: mypy
         exclude: ^agents/controller\.py$
+        args:
+          - --exclude
+          - ^(build/|desktop/node_modules/|ui/node_modules/|desktop/runtime/)
         additional_dependencies:
           - types-requests

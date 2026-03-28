@@ -29,6 +29,7 @@ ui/.vite/
 # Misc
 data/
 data/journal.sqlite
+build/
 *.egg-info/
 Lab Notebook Web App UI.zip
 ai-lab-journal - open source/

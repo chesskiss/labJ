@@ -98,6 +98,7 @@ class ServiceSupervisor {
       envFilePath = null,
       runtimeRoot = null,
       packaged = false,
+      envOverrides = {},
     } = config;
 
     this.sourceRoot = sourceRoot;
@@ -106,6 +107,7 @@ class ServiceSupervisor {
     this.envFilePath = envFilePath;
     this.runtimeRoot = runtimeRoot;
     this.packaged = packaged;
+    this.envOverrides = envOverrides;
     this.services = new Map();
     this.supervisorLogFile = path.join(this.logsDir, "supervisor.log");
     this.envFromFile = parseDotEnvFile(envFilePath);
@@ -268,6 +270,7 @@ class ServiceSupervisor {
     const mergedEnv = {
       ...process.env,
       ...this.envFromFile,
+      ...this.envOverrides,
       ...env,
       PYTHONUNBUFFERED: "1",
     };

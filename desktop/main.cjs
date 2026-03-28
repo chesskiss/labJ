@@ -62,6 +62,153 @@ function resolvePaths() {
   };
 }
 
+function readEnvValue(envFilePath, key) {
+  if (!fs.existsSync(envFilePath)) {
+    return null;
+  }
+  const raw = fs.readFileSync(envFilePath, "utf8");
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      continue;
+    }
+    const index = trimmed.indexOf("=");
+    if (index === -1) {
+      continue;
+    }
+    const currentKey = trimmed.slice(0, index).trim();
+    if (currentKey !== key) {
+      continue;
+    }
+    let value = trimmed.slice(index + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    return value;
+  }
+  return null;
+}
+
+function upsertEnvValue(envFilePath, key, value) {
+  const nextLine = `${key}=${value}`;
+  const original = fs.existsSync(envFilePath) ? fs.readFileSync(envFilePath, "utf8") : "";
+  const lines = original.length ? original.split(/\r?\n/) : [];
+  let replaced = false;
+  const updated = lines.map((line) => {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) {
+      return line;
+    }
+    const index = trimmed.indexOf("=");
+    if (index === -1) {
+      return line;
+    }
+    const currentKey = trimmed.slice(0, index).trim();
+    if (currentKey !== key) {
+      return line;
+    }
+    replaced = true;
+    return nextLine;
+  });
+
+  if (!replaced) {
+    if (updated.length && updated[updated.length - 1].trim().length) {
+      updated.push("");
+    }
+    updated.push(nextLine);
+  }
+
+  fs.writeFileSync(envFilePath, updated.join("\n"));
+}
+
+async function promptForLlmApiKey() {
+  return new Promise((resolve) => {
+    let settled = false;
+    const promptWindow = new BrowserWindow({
+      width: 520,
+      height: 280,
+      show: false,
+      resizable: false,
+      minimizable: false,
+      maximizable: false,
+      modal: true,
+      parent: mainWindow ?? undefined,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+      },
+    });
+
+    const channel = `llm-key:${Date.now()}:${Math.random().toString(16).slice(2)}`;
+    const settle = (value) => {
+      if (settled) {
+        return;
+      }
+      settled = true;
+      resolve(value);
+    };
+    const cleanup = () => {
+      ipcMain.removeAllListeners(channel);
+      if (!promptWindow.isDestroyed()) {
+        promptWindow.close();
+      }
+    };
+
+    ipcMain.on(channel, (_event, payload) => {
+      const action = payload?.action;
+      if (action === "save") {
+        const value = typeof payload.value === "string" ? payload.value.trim() : "";
+        cleanup();
+        settle(value.length ? value : null);
+        return;
+      }
+      cleanup();
+      settle(null);
+    });
+
+    promptWindow.on("closed", () => {
+      ipcMain.removeAllListeners(channel);
+      settle(null);
+    });
+
+    const html = `
+      <html>
+        <body style="font-family: sans-serif; padding: 20px; display:flex; flex-direction:column; gap:12px;">
+          <h3 style="margin:0;">LLM API key required</h3>
+          <p style="margin:0;">Enter <code>LLM_API_KEY</code> to enable LLM parsing.</p>
+          <input id="keyInput" type="password" placeholder="gsk_..." style="padding:8px; font-size:14px;" autofocus />
+          <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <button id="cancelBtn" style="padding:8px 12px;">Cancel</button>
+            <button id="saveBtn" style="padding:8px 12px;">Save & Continue</button>
+          </div>
+          <script>
+            const { ipcRenderer } = require("electron");
+            const channel = ${JSON.stringify(channel)};
+            const keyInput = document.getElementById("keyInput");
+            document.getElementById("cancelBtn").addEventListener("click", () => {
+              ipcRenderer.send(channel, { action: "cancel" });
+            });
+            document.getElementById("saveBtn").addEventListener("click", () => {
+              ipcRenderer.send(channel, { action: "save", value: keyInput.value });
+            });
+            keyInput.addEventListener("keydown", (event) => {
+              if (event.key === "Enter") {
+                ipcRenderer.send(channel, { action: "save", value: keyInput.value });
+              }
+            });
+          </script>
+        </body>
+      </html>
+    `;
+
+    promptWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+    promptWindow.once("ready-to-show", () => promptWindow.show());
+  });
+}
+
 function createBootWindow() {
   logMain("createBootWindow:start");
   mainWindow = new BrowserWindow({
@@ -135,6 +282,29 @@ async function startRuntimeAndUi() {
     return;
   }
 
+  let llmApiKey = readEnvValue(paths.envFilePath, "LLM_API_KEY");
+  if (!llmApiKey || !llmApiKey.trim().length) {
+    logMain("startup:llm_api_key_missing_prompt");
+    llmApiKey = await promptForLlmApiKey();
+    if (!llmApiKey) {
+      logMain("startup:error_no_llm_api_key_provided");
+      await dialog.showMessageBox({
+        type: "error",
+        title: "LLM_API_KEY required",
+        message: "Startup cancelled because no LLM API key was provided.",
+        detail: "Set LLM_API_KEY in .env or provide it in the prompt.",
+      });
+      return;
+    }
+    try {
+      upsertEnvValue(paths.envFilePath, "LLM_API_KEY", llmApiKey);
+      logMain("startup:llm_api_key_saved_to_env");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      logMain("startup:warn_failed_to_persist_llm_api_key", { message });
+    }
+  }
+
   supervisor = new ServiceSupervisor({
     sourceRoot: paths.sourceRoot,
     dataDir: paths.dataDir,
@@ -142,6 +312,9 @@ async function startRuntimeAndUi() {
     envFilePath: paths.envFilePath,
     runtimeRoot: paths.runtimeRoot,
     packaged: paths.packaged,
+    envOverrides: {
+      LLM_API_KEY: llmApiKey,
+    },
   });
 
   ipcMain.handle("runtime:getStatus", async () => supervisor.getStatus());
