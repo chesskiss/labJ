@@ -12,12 +12,16 @@ const PORTS = {
 let mainWindow = null;
 let supervisor = null;
 let mainLogFile = null;
+let runLogFile = null;
 
 function logMain(message, context = {}) {
   const line = `[${new Date().toISOString()}] [main] ${message} ${
     Object.keys(context).length ? JSON.stringify(context) : ""
   }\n`;
   try {
+    if (runLogFile) {
+      fs.appendFileSync(runLogFile, line);
+    }
     if (mainLogFile) {
       fs.appendFileSync(mainLogFile, line);
     }
@@ -262,6 +266,12 @@ async function startRuntimeAndUi() {
   const logsDir = path.join(app.getPath("userData"), "logs");
   fs.mkdirSync(logsDir, { recursive: true });
   mainLogFile = path.join(logsDir, "main.log");
+  runLogFile = path.join(paths.sourceRoot, "labj_run.log");
+  try {
+    fs.writeFileSync(runLogFile, "");
+  } catch {
+    runLogFile = null;
+  }
   logMain("startRuntimeAndUi:paths", {
     packaged: paths.packaged,
     sourceRoot: paths.sourceRoot,
@@ -269,6 +279,7 @@ async function startRuntimeAndUi() {
     envFilePath: paths.envFilePath,
     runtimeRoot: paths.runtimeRoot,
     logsDir,
+    runLogFile,
   });
 
   if (!fs.existsSync(paths.envFilePath)) {
@@ -312,6 +323,7 @@ async function startRuntimeAndUi() {
     envFilePath: paths.envFilePath,
     runtimeRoot: paths.runtimeRoot,
     packaged: paths.packaged,
+    runLogFile,
     envOverrides: {
       LLM_API_KEY: llmApiKey,
     },

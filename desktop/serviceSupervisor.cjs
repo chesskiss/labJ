@@ -98,6 +98,7 @@ class ServiceSupervisor {
       envFilePath = null,
       runtimeRoot = null,
       packaged = false,
+      runLogFile = null,
       envOverrides = {},
     } = config;
 
@@ -107,6 +108,7 @@ class ServiceSupervisor {
     this.envFilePath = envFilePath;
     this.runtimeRoot = runtimeRoot;
     this.packaged = packaged;
+    this.runLogFile = runLogFile;
     this.envOverrides = envOverrides;
     this.services = new Map();
     this.supervisorLogFile = path.join(this.logsDir, "supervisor.log");
@@ -296,9 +298,11 @@ class ServiceSupervisor {
 
     child.stdout.on("data", (chunk) => {
       logStream.write(chunk);
+      this._appendRunLogBuffer(name, "stdout", chunk);
     });
     child.stderr.on("data", (chunk) => {
       logStream.write(chunk);
+      this._appendRunLogBuffer(name, "stderr", chunk);
     });
     child.on("exit", (code) => {
       this._log("service:exit", { name, code: code ?? null });
@@ -359,10 +363,32 @@ class ServiceSupervisor {
     try {
       fs.mkdirSync(this.logsDir, { recursive: true });
       fs.appendFileSync(this.supervisorLogFile, line);
+      if (this.runLogFile) {
+        fs.appendFileSync(this.runLogFile, line);
+      }
     } catch {
       // ignore log write errors
     }
     process.stdout.write(line);
+  }
+
+  _appendRunLogBuffer(serviceName, streamName, chunk) {
+    if (!this.runLogFile) {
+      return;
+    }
+    try {
+      const text = Buffer.isBuffer(chunk) ? chunk.toString("utf8") : String(chunk);
+      const prefixed = text
+        .split(/\r?\n/)
+        .filter((line) => line.length > 0)
+        .map((line) => `[${new Date().toISOString()}] [${serviceName}:${streamName}] ${line}\n`)
+        .join("");
+      if (prefixed.length) {
+        fs.appendFileSync(this.runLogFile, prefixed);
+      }
+    } catch {
+      // ignore run-log write errors
+    }
   }
 }
 

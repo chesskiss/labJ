@@ -47,6 +47,11 @@ npm run dist:all
 
 Artifacts are written to `desktop/release/`.
 
+## Startup debug log
+- On every desktop app launch, `labj_run.log` is recreated in project root.
+- This file includes main-process, supervisor, and backend stdout/stderr lines.
+- If startup fails on Windows/macOS, send `labj_run.log`.
+
 ## One-click build scripts from repo root
 - Windows: `Build Windows Installer.bat`
 - macOS: `Build macOS Installer.command`
