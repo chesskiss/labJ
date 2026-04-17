@@ -19,7 +19,9 @@ jobs:
         with:
           node-version: "20"
           cache: "npm"
-          cache-dependency-path: desktop/package-lock.json
+          cache-dependency-path: |
+            desktop/package-lock.json
+            ui/package-lock.json
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -33,6 +35,10 @@ jobs:
 
       - name: Install desktop dependencies
         working-directory: desktop
+        run: npm ci
+
+      - name: Install UI dependencies
+        working-directory: ui
         run: npm ci
 
       - name: Build Windows installer
