@@ -1,0 +1,171 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.2, pytest-9.0.2, pluggy-1.6.0
+rootdir: /Users/arnoldcheskis/Documents/Projects/labJ
+configfile: pytest.ini
+plugins: anyio-4.12.0
+collected 139 items / 20 errors
+
+==================================== ERRORS ====================================
+_ ERROR collecting desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/context_action_plan/tests/test_examples.py _
+import file mismatch:
+imported module 'test_examples' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/context_action_plan/tests/test_examples.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/context_action_plan/tests/test_examples.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+_ ERROR collecting desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/context_action_plan/tests/test_llm_parser.py _
+import file mismatch:
+imported module 'test_llm_parser' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/context_action_plan/tests/test_llm_parser.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/context_action_plan/tests/test_llm_parser.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+_ ERROR collecting desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/context_action_plan/tests/test_parser.py _
+import file mismatch:
+imported module 'test_parser' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/context_action_plan/tests/test_parser.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/context_action_plan/tests/test_parser.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+_ ERROR collecting desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/db/tests/test_journal_repository.py _
+import file mismatch:
+imported module 'test_journal_repository' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/db/tests/test_journal_repository.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/db/tests/test_journal_repository.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+_ ERROR collecting desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/db/tests/test_sanity_check.py _
+import file mismatch:
+imported module 'test_sanity_check' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/db/tests/test_sanity_check.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/db/tests/test_sanity_check.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+______ ERROR collecting executor_runtime/tests/test_executor_failures.py _______
+import file mismatch:
+imported module 'test_executor_failures' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/executor_runtime/tests/test_executor_failures.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/executor_runtime/tests/test_executor_failures.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+_______ ERROR collecting executor_runtime/tests/test_executor_success.py _______
+import file mismatch:
+imported module 'test_executor_success' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/executor_runtime/tests/test_executor_success.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/executor_runtime/tests/test_executor_success.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+__________ ERROR collecting executor_runtime/tests/test_mock_tools.py __________
+import file mismatch:
+imported module 'test_mock_tools' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/executor_runtime/tests/test_mock_tools.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/executor_runtime/tests/test_mock_tools.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+____ ERROR collecting executor_runtime/tests/test_non_executable_outputs.py ____
+import file mismatch:
+imported module 'test_non_executable_outputs' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/executor_runtime/tests/test_non_executable_outputs.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/executor_runtime/tests/test_non_executable_outputs.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+_____ ERROR collecting executor_runtime/tests/test_reference_resolution.py _____
+import file mismatch:
+imported module 'test_reference_resolution' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/executor_runtime/tests/test_reference_resolution.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/executor_runtime/tests/test_reference_resolution.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+____________ ERROR collecting journal_api/tests/test_journal_api.py ____________
+import file mismatch:
+imported module 'test_journal_api' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/journal_api/tests/test_journal_api.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/journal_api/tests/test_journal_api.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+___________ ERROR collecting orchestration_api/tests/test_health.py ____________
+import file mismatch:
+imported module 'test_health' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/orchestration_api/tests/test_health.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/orchestration_api/tests/test_health.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+__________ ERROR collecting orchestration_api/tests/test_mic_flow.py ___________
+import file mismatch:
+imported module 'test_mic_flow' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/orchestration_api/tests/test_mic_flow.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/orchestration_api/tests/test_mic_flow.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+________ ERROR collecting orchestration_api/tests/test_process_text.py _________
+import file mismatch:
+imported module 'test_process_text' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/orchestration_api/tests/test_process_text.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/orchestration_api/tests/test_process_text.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+_________ ERROR collecting plan_validation/tests/test_invalid_cases.py _________
+import file mismatch:
+imported module 'test_invalid_cases' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/plan_validation/tests/test_invalid_cases.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/plan_validation/tests/test_invalid_cases.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+___________ ERROR collecting plan_validation/tests/test_registry.py ____________
+import file mismatch:
+imported module 'test_registry' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/plan_validation/tests/test_registry.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/plan_validation/tests/test_registry.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+_____ ERROR collecting plan_validation/tests/test_validator_action_plan.py _____
+import file mismatch:
+imported module 'test_validator_action_plan' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/plan_validation/tests/test_validator_action_plan.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/plan_validation/tests/test_validator_action_plan.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+____ ERROR collecting plan_validation/tests/test_validator_clarification.py ____
+import file mismatch:
+imported module 'test_validator_clarification' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/plan_validation/tests/test_validator_clarification.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/plan_validation/tests/test_validator_clarification.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+____ ERROR collecting plan_validation/tests/test_validator_note_capture.py _____
+import file mismatch:
+imported module 'test_validator_note_capture' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/plan_validation/tests/test_validator_note_capture.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/plan_validation/tests/test_validator_note_capture.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+______________ ERROR collecting tools/tests/test_journal_tool.py _______________
+import file mismatch:
+imported module 'test_journal_tool' has this __file__ attribute:
+  /Users/arnoldcheskis/Documents/Projects/labJ/desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/tools/tests/test_journal_tool.py
+which is not the same as the test file we want to collect:
+  /Users/arnoldcheskis/Documents/Projects/labJ/tools/tests/test_journal_tool.py
+HINT: remove __pycache__ / .pyc files and/or use a unique basename for your test file modules
+=========================== short test summary info ============================
+ERROR desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/context_action_plan/tests/test_examples.py
+ERROR desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/context_action_plan/tests/test_llm_parser.py
+ERROR desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/context_action_plan/tests/test_parser.py
+ERROR desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/db/tests/test_journal_repository.py
+ERROR desktop/release/mac-arm64/LabJ.app/Contents/Resources/labj_backend_src/db/tests/test_sanity_check.py
+ERROR executor_runtime/tests/test_executor_failures.py
+ERROR executor_runtime/tests/test_executor_success.py
+ERROR executor_runtime/tests/test_mock_tools.py
+ERROR executor_runtime/tests/test_non_executable_outputs.py
+ERROR executor_runtime/tests/test_reference_resolution.py
+ERROR journal_api/tests/test_journal_api.py
+ERROR orchestration_api/tests/test_health.py
+ERROR orchestration_api/tests/test_mic_flow.py
+ERROR orchestration_api/tests/test_process_text.py
+ERROR plan_validation/tests/test_invalid_cases.py
+ERROR plan_validation/tests/test_registry.py
+ERROR plan_validation/tests/test_validator_action_plan.py
+ERROR plan_validation/tests/test_validator_clarification.py
+ERROR plan_validation/tests/test_validator_note_capture.py
+ERROR tools/tests/test_journal_tool.py
+!!!!!!!!!!!!!!!!!!! Interrupted: 20 errors during collection !!!!!!!!!!!!!!!!!!!
+============================== 20 errors in 1.39s ==============================

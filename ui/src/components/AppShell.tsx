@@ -7,7 +7,6 @@ import {
   type JournalEntryRecord,
 } from "../api/journalApi";
 import { micStart, micStop } from "../api/orchestrationApi";
-import { initialEntries } from "../data/mockData";
 import type {
   AppSection,
   Entry,
@@ -112,23 +111,6 @@ function entrySignature(entry: Entry): string {
     title: entry.title,
     content: entry.content,
     metadata: entry.metadata,
-  });
-}
-
-function fallbackEntriesFromMockData(): Entry[] {
-  return initialEntries.map((entry, index) => {
-    const sessionId = entry.sessionId || `mock-session-${index}`;
-    return {
-      ...entry,
-      id: sessionId,
-      sessionId,
-      headRevisionId: null,
-      baseRevisionId: null,
-      createdBy: entry.createdBy || "ui_manual",
-      entryType: entry.entryType || "general",
-      lastSavedAt: entry.lastSavedAt ?? null,
-      isDirty: false,
-    };
   });
 }
 
@@ -545,13 +527,11 @@ export function AppShell() {
           : "Failed to load journal data from DB-backed API.";
       setLoadError(message);
 
-      const fallbackEntries = fallbackEntriesFromMockData();
-      savedSignatureRef.current = new Map(
-        fallbackEntries.map((entry) => [entry.sessionId, entrySignature(entry)])
-      );
-      setEntries(fallbackEntries);
-      setActiveEntryId(fallbackEntries[0].id);
-      setLoadedRevisionId(fallbackEntries[0].baseRevisionId);
+      const draft = createDraftEntry("Untitled Session");
+      savedSignatureRef.current = new Map([[draft.sessionId, entrySignature(draft)]]);
+      setEntries([draft]);
+      setActiveEntryId(draft.id);
+      setLoadedRevisionId(draft.baseRevisionId);
       setSaveStatus("saved");
     } finally {
       setIsHydrating(false);
