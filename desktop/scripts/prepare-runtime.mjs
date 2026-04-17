@@ -25,16 +25,28 @@ function run(command, args, cwd = repoRoot) {
   }
 }
 
-const uvCommand = process.env.LABJ_UV_BIN || "uv";
+function commandExists(command, args = ["--version"]) {
+  const result = spawnSync(command, args, {
+    stdio: "ignore",
+    shell: process.platform === "win32",
+  });
+  return result.status === 0;
+}
 
-const uvCheck = spawnSync(uvCommand, ["--version"], {
-  stdio: "ignore",
-  shell: process.platform === "win32",
-});
+function resolvePythonCommand() {
+  const candidates = [
+    process.env.LABJ_PYTHON_BIN,
+    process.platform === "win32" ? "py" : "python3",
+    "python",
+  ].filter(Boolean);
 
-if (uvCheck.status !== 0) {
-  console.error("[prepare-runtime] uv not found. Install uv or set LABJ_UV_BIN.");
-  process.exit(1);
+  for (const candidate of candidates) {
+    if (commandExists(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
 }
 
 if (existsSync(runtimeRoot)) {
@@ -42,10 +54,36 @@ if (existsSync(runtimeRoot)) {
 }
 mkdirSync(runtimeRoot, { recursive: true });
 
-console.log("[prepare-runtime] creating venv...");
-run(uvCommand, ["venv", venvDir]);
+const uvCommand = process.env.LABJ_UV_BIN || "uv";
 
-console.log("[prepare-runtime] installing LabJ package + dependencies...");
-run(uvCommand, ["pip", "install", "--python", venvPython, "."]);
+if (commandExists(uvCommand)) {
+  console.log("[prepare-runtime] creating venv with uv...");
+  run(uvCommand, ["venv", venvDir]);
+
+  console.log("[prepare-runtime] installing LabJ package + dependencies with uv...");
+  run(uvCommand, ["pip", "install", "--python", venvPython, "."]);
+} else {
+  const pythonCommand = resolvePythonCommand();
+  if (!pythonCommand) {
+    console.error(
+      "[prepare-runtime] Could not find uv or Python 3.10+. Install Python or set LABJ_PYTHON_BIN.",
+    );
+    process.exit(1);
+  }
+
+  const venvArgs = process.platform === "win32" && pythonCommand === "py"
+    ? ["-3", "-m", "venv", venvDir]
+    : ["-m", "venv", venvDir];
+  const pipArgs = ["-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"];
+
+  console.log(`[prepare-runtime] creating venv with ${pythonCommand}...`);
+  run(pythonCommand, venvArgs);
+
+  console.log("[prepare-runtime] upgrading pip tooling...");
+  run(venvPython, pipArgs);
+
+  console.log("[prepare-runtime] installing LabJ package + dependencies with pip...");
+  run(venvPython, ["-m", "pip", "install", "."]);
+}
 
 console.log("[prepare-runtime] runtime ready at", venvDir);

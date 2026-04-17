@@ -14,7 +14,7 @@ For installer builds, it bundles a Python runtime (`desktop/runtime/.venv`) and 
 ## Prerequisites
 - Node.js 18+
 - Python 3.10+
-- `uv` (required for `prepare:runtime` / installer builds)
+- `uv` optional. If present, installer builds use it. Otherwise the build falls back to standard Python `venv` + `pip`.
 
 ## Run desktop app (dev)
 ```bash
@@ -55,6 +55,16 @@ Artifacts are written to `desktop/release/`.
 ## One-click build scripts from repo root
 - Windows: `Build Windows Installer.bat`
 - macOS: `Build macOS Installer.command`
+
+These are source-build scripts for developers. End users should run the generated installer artifact from `desktop/release/`, not these scripts.
+
+## Windows CI build
+- Workflow: `.github/workflows/build-windows.yml`
+- Runner: `windows-latest`
+- Placeholder environment file: repo-root `.env` containing `LLM_API_KEY=`
+- Artifact: `labj-windows-installer`
+
+Use this when you want a Windows-built installer without maintaining a local Windows VM. After the workflow completes, download the artifact from GitHub Actions and send the generated installer `.exe` to the Windows user.
 
 ## Environment options
 - `LABJ_REPO_ROOT`: override backend repo root path.

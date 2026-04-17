@@ -35,9 +35,25 @@ npm run dist:mac
 
 Desktop details: `desktop/README.md`
 
-One-click installer build launchers:
+One-click installer build launchers for developers:
 - Windows: double-click `Build Windows Installer.bat`
 - macOS: double-click `Build macOS Installer.command`
+
+These scripts build an installer from source. They are not the end-user app launchers. A partner should receive the generated installer from `desktop/release/`, not the repository and build scripts.
+
+Windows CI installer build:
+- Workflow file: `.github/workflows/build-windows.yml`
+- Runs on GitHub Actions `windows-latest`
+- Creates a placeholder repo-root `.env` with exactly `LLM_API_KEY=` so the packaged app prompts for a key on first launch
+- Builds the Windows installer and uploads it as the `labj-windows-installer` artifact
+
+How to use the Windows CI build:
+1. Commit and push the workflow file to GitHub.
+2. Open the repository `Actions` tab.
+3. Open `Build Windows Installer`.
+4. Click `Run workflow`, or push to `main` to trigger it automatically.
+5. When the run finishes, download the `labj-windows-installer` artifact.
+6. Send the generated `.exe` inside that artifact to the Windows user.
 
 One-click local desktop launcher on macOS:
 - double-click `Run LabJ macOS.command`
@@ -64,7 +80,6 @@ docker compose --env-file launch/.env.full -f launch/docker-compose.full.yml dow
 Prerequisites:
 - Python 3.10+
 - Node.js 18+
-- `uv`
 
 Install once:
 

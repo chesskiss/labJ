@@ -16,9 +16,12 @@ if errorlevel 1 (
   exit /b 1
 )
 
-where uv >nul 2>&1
+where py >nul 2>&1
 if errorlevel 1 (
-  echo [LabJ] uv is not installed. Install with: pip install uv
+  where python >nul 2>&1
+)
+if errorlevel 1 (
+  echo [LabJ] Python 3.10+ is required to bundle the desktop runtime.
   pause
   exit /b 1
 )
