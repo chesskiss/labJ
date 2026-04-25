@@ -79,10 +79,12 @@ function copyWindowsPythonHome(pythonCommand) {
   cpSync(pythonHome, bundledPythonDir, {
     recursive: true,
     force: true,
-    verbatimSymlinks: true,
     filter: (source) => {
       const normalized = source.replace(/\\/g, "/");
-      return !normalized.includes("/Lib/site-packages/");
+      return (
+        !normalized.includes("/Lib/site-packages/") &&
+        !normalized.endsWith("/python3.exe")
+      );
     },
   });
 }
