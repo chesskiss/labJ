@@ -40,6 +40,15 @@ def _client_with_sqlite(tmp_path: Path) -> TestClient:
     return TestClient(app_module.app)
 
 
+def _wait_for(predicate, *, timeout: float = 1.5, interval: float = 0.02) -> bool:
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if predicate():
+            return True
+        time.sleep(interval)
+    return predicate()
+
+
 def test_mic_lifecycle_idempotent(tmp_path: Path, monkeypatch):
     monkeypatch.setattr("orchestration_api.mic_manager.STTClient", _FakeSTTClient)
     client = _client_with_sqlite(tmp_path)
@@ -84,7 +93,12 @@ def test_mic_chunk_processing_records_events(tmp_path: Path, monkeypatch):
     fake_client = manager._client
     assert isinstance(fake_client, _FakeSTTClient)
     fake_client.emit("sample 4 became cloudy after heating")
-    time.sleep(0.1)
+
+    def _processed_event_exists() -> bool:
+        events = client.get("/mic/events").json()["events"]
+        return any(evt.get("type") == "chunk_processed" for evt in events)
+
+    assert _wait_for(_processed_event_exists)
 
     events_resp = client.get("/mic/events")
     assert events_resp.status_code == 200
@@ -116,7 +130,12 @@ def test_mic_processing_failure_does_not_kill_session(tmp_path: Path, monkeypatc
     assert isinstance(fake_client, _FakeSTTClient)
     fake_client.emit("one")
     fake_client.emit("two")
-    time.sleep(0.1)
+
+    def _failure_event_exists() -> bool:
+        events = client.get("/mic/events").json()["events"]
+        return any(evt.get("type") == "chunk_processing_failed" for evt in events)
+
+    assert _wait_for(_failure_event_exists)
 
     events = client.get("/mic/events").json()["events"]
     failures = [evt for evt in events if evt.get("type") == "chunk_processing_failed"]
@@ -148,7 +167,7 @@ def test_mic_context_window_carries_recent_chunks_and_resets_on_stop(
 
     fake_client.emit("sample 4 became cloudy after heating")
     fake_client.emit("and then it became clearer")
-    time.sleep(0.15)
+    assert _wait_for(lambda: len(captured_contexts) >= 2)
 
     assert len(captured_contexts) >= 2
     assert "[current] sample 4 became cloudy after heating" in captured_contexts[0]
@@ -162,7 +181,7 @@ def test_mic_context_window_carries_recent_chunks_and_resets_on_stop(
     fake_client = manager._client
     assert isinstance(fake_client, _FakeSTTClient)
     fake_client.emit("new session first chunk")
-    time.sleep(0.1)
+    assert _wait_for(lambda: len(captured_contexts) >= 3)
     client.post("/mic/stop")
 
     assert "[recent] sample 4 became cloudy after heating" not in captured_contexts[-1]
