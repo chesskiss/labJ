@@ -1,7 +1,7 @@
 # LabJ Desktop (Electron)
 
 This desktop app starts LabJ backend services locally (no Docker) and then opens the UI.
-For installer builds, it bundles a Python runtime (`desktop/runtime/.venv`) and ships `.env` from repo root.
+For installer builds, it bundles a Python runtime and ships `.env` from repo root.
 
 ## Runtime behavior
 - Starts:
@@ -14,7 +14,7 @@ For installer builds, it bundles a Python runtime (`desktop/runtime/.venv`) and 
 ## Prerequisites
 - Node.js 18+
 - Python 3.10+
-- `uv` optional. If present, installer builds use it. Otherwise the build falls back to standard Python `venv` + `pip`.
+- `uv` optional. If present, non-Windows installer builds use it. Windows installer builds bundle a copied Python runtime plus packaged `site-packages` so the installed app does not depend on a relocatable virtualenv.
 
 ## Run desktop app (dev)
 ```bash

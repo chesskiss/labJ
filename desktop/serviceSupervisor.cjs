@@ -82,11 +82,25 @@ function resolveBundledPython(runtimeRoot) {
   if (!runtimeRoot) {
     return null;
   }
+  const portablePythonPath =
+    process.platform === "win32"
+      ? path.join(runtimeRoot, "python", "python.exe")
+      : path.join(runtimeRoot, "python", "bin", "python3");
+  if (fs.existsSync(portablePythonPath)) {
+    return {
+      command: portablePythonPath,
+      useUv: false,
+      bundled: true,
+      pythonPathEntries: [runtimeRoot, path.join(runtimeRoot, "site-packages")],
+    };
+  }
   const pythonPath =
     process.platform === "win32"
       ? path.join(runtimeRoot, ".venv", "Scripts", "python.exe")
       : path.join(runtimeRoot, ".venv", "bin", "python");
-  return fs.existsSync(pythonPath) ? pythonPath : null;
+  return fs.existsSync(pythonPath)
+    ? { command: pythonPath, useUv: false, bundled: true, pythonPathEntries: [] }
+    : null;
 }
 
 class ServiceSupervisor {
@@ -114,9 +128,7 @@ class ServiceSupervisor {
     this.supervisorLogFile = path.join(this.logsDir, "supervisor.log");
     this.envFromFile = parseDotEnvFile(envFilePath);
     const bundledPython = resolveBundledPython(runtimeRoot);
-    this.runner = bundledPython
-      ? { command: bundledPython, useUv: false, bundled: true }
-      : resolvePythonRunner();
+    this.runner = bundledPython ?? resolvePythonRunner();
     this.status = {
       state: "stopped",
       services: {},
@@ -278,6 +290,8 @@ class ServiceSupervisor {
     };
     if (!this.runner.bundled) {
       mergedEnv.PYTHONPATH = this.sourceRoot;
+    } else if (Array.isArray(this.runner.pythonPathEntries) && this.runner.pythonPathEntries.length) {
+      mergedEnv.PYTHONPATH = [this.sourceRoot, ...this.runner.pythonPathEntries].join(path.delimiter);
     }
 
     const child = spawn(this.runner.command, args, {

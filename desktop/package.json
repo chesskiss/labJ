@@ -32,7 +32,9 @@
         "from": "runtime",
         "to": "labj_runtime",
         "filter": [
-          ".venv/**"
+          ".venv/**",
+          "python/**",
+          "site-packages/**"
         ]
       },
       {
