@@ -30,6 +30,9 @@ interface WorkspaceProps {
   onToggleVoiceMic: () => void;
   voiceTranscriptPreview: string | null;
   voiceErrorMessage: string | null;
+  runtimeWarningMessage: string | null;
+  onOpenRuntimeLogs: () => void;
+  onRestartRuntime: () => void;
   loadError: string | null;
   saveError: string | null;
   revisionHistory: JournalEntryRecord[];
@@ -61,6 +64,9 @@ export function Workspace({
   onToggleVoiceMic,
   voiceTranscriptPreview,
   voiceErrorMessage,
+  runtimeWarningMessage,
+  onOpenRuntimeLogs,
+  onRestartRuntime,
   loadError,
   saveError,
   revisionHistory,
@@ -95,6 +101,17 @@ export function Workspace({
           {loadError && (
             <div className="workspaceNotice error" role="status" aria-live="polite">
               Loading DB-backed journal data failed. Showing fallback data. {loadError}
+            </div>
+          )}
+          {runtimeWarningMessage && (
+            <div className="workspaceNotice warning" role="status" aria-live="polite">
+              {runtimeWarningMessage}
+              <button type="button" className="secondaryButton noticeAction" onClick={onOpenRuntimeLogs}>
+                Open logs
+              </button>
+              <button type="button" className="secondaryButton noticeAction" onClick={onRestartRuntime}>
+                Restart runtime
+              </button>
             </div>
           )}
           {saveError && (

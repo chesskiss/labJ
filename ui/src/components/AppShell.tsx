@@ -151,6 +151,7 @@ export function AppShell() {
   const [voiceMicState, setVoiceMicState] = useState<VoiceMicState>("idle");
   const [voiceTranscriptPreview, setVoiceTranscriptPreview] = useState<string | null>(null);
   const [voiceErrorMessage, setVoiceErrorMessage] = useState<string | null>(null);
+  const [desktopRuntimeStatus, setDesktopRuntimeStatus] = useState<LabJDesktopRuntimeStatus | null>(null);
 
   const [loadError, setLoadError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -178,6 +179,22 @@ export function AppShell() {
     }
     return activeEntry.headRevisionId !== loadedRevisionId;
   }, [activeEntry?.headRevisionId, loadedRevisionId]);
+  const runtimeWarningMessage = useMemo(() => {
+    if (!desktopRuntimeStatus) {
+      return null;
+    }
+    if (desktopRuntimeStatus.serviceHealth.stt === true) {
+      return null;
+    }
+    if (
+      desktopRuntimeStatus.state !== "degraded" &&
+      !desktopRuntimeStatus.pendingServices.includes("stt")
+    ) {
+      return null;
+    }
+    const suffix = desktopRuntimeStatus.lastError ? ` ${desktopRuntimeStatus.lastError}` : "";
+    return `Voice transcription is still warming up. Journal and orchestration are available, but mic features may fail until STT is ready.${suffix}`;
+  }, [desktopRuntimeStatus]);
 
   useEffect(() => {
     activeEntryRef.current = activeEntry;
@@ -188,6 +205,36 @@ export function AppShell() {
       if (saveDebounceRef.current) {
         window.clearTimeout(saveDebounceRef.current);
       }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!window.labjDesktop) {
+      return;
+    }
+
+    let disposed = false;
+    const pollRuntimeStatus = async () => {
+      try {
+        const status = await window.labjDesktop?.getRuntimeStatus();
+        if (!disposed && status) {
+          setDesktopRuntimeStatus(status);
+        }
+      } catch {
+        if (!disposed) {
+          setDesktopRuntimeStatus(null);
+        }
+      }
+    };
+
+    void pollRuntimeStatus();
+    const intervalId = window.setInterval(() => {
+      void pollRuntimeStatus();
+    }, 2000);
+
+    return () => {
+      disposed = true;
+      window.clearInterval(intervalId);
     };
   }, []);
 
@@ -809,6 +856,15 @@ export function AppShell() {
       return;
     }
 
+    if (
+      voiceMicState === "idle" &&
+      desktopRuntimeStatus &&
+      desktopRuntimeStatus.serviceHealth.stt !== true
+    ) {
+      setVoiceErrorMessage("STT is still warming up. Try the mic again after the runtime notice clears.");
+      return;
+    }
+
     if (voiceMicState === "listening") {
       setVoiceMicState("processing");
       setVoiceErrorMessage(null);
@@ -878,6 +934,25 @@ export function AppShell() {
     })();
   };
 
+  const handleOpenRuntimeLogs = () => {
+    void window.labjDesktop?.openLogsFolder();
+  };
+
+  const handleRestartRuntime = () => {
+    void (async () => {
+      try {
+        const status = await window.labjDesktop?.restartRuntime();
+        if (status) {
+          setDesktopRuntimeStatus(status);
+        }
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to restart desktop runtime.";
+        setVoiceErrorMessage(message);
+      }
+    })();
+  };
+
   if (!activeEntry) {
     return (
       <div className="appShell">
@@ -936,6 +1011,9 @@ export function AppShell() {
         onToggleVoiceMic={handleToggleVoiceMic}
         voiceTranscriptPreview={voiceTranscriptPreview}
         voiceErrorMessage={voiceErrorMessage}
+        runtimeWarningMessage={runtimeWarningMessage}
+        onOpenRuntimeLogs={handleOpenRuntimeLogs}
+        onRestartRuntime={handleRestartRuntime}
         loadError={loadError}
         saveError={saveError}
         revisionHistory={revisionHistory}

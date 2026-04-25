@@ -10,6 +10,8 @@ For installer builds, it bundles a Python runtime and ships `.env` from repo roo
   - `journal_api.app:app` on `127.0.0.1:8002`
 - Loads prebuilt UI from `ui/dist`.
 - Mic flow stays unchanged: UI button calls `/mic/start` and `/mic/stop`.
+- Packaged startup waits for `journal_api` and `orchestration_api` first, then lets `stt` continue warming up in the background.
+- When `WHISPER_MODEL` is not set in packaged mode, desktop defaults it to `tiny` to reduce first-run download/load time.
 
 ## Prerequisites
 - Node.js 18+

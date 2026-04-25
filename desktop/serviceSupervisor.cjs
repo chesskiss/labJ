@@ -129,9 +129,12 @@ class ServiceSupervisor {
     this.envFromFile = parseDotEnvFile(envFilePath);
     const bundledPython = resolveBundledPython(runtimeRoot);
     this.runner = bundledPython ?? resolvePythonRunner();
+    this._optionalWarmupPromise = null;
     this.status = {
       state: "stopped",
       services: {},
+      serviceHealth: {},
+      pendingServices: [],
       lastError: null,
       logsDir,
     };
@@ -151,12 +154,18 @@ class ServiceSupervisor {
   }
 
   async startAll() {
-    if (this.status.state === "starting" || this.status.state === "running") {
+    if (
+      this.status.state === "starting" ||
+      this.status.state === "running" ||
+      this.status.state === "degraded"
+    ) {
       return;
     }
 
     this.status.state = "starting";
     this.status.lastError = null;
+    this.status.serviceHealth = {};
+    this.status.pendingServices = [];
     this._log("startAll:begin", {
       sourceRoot: this.sourceRoot,
       dataDir: this.dataDir,
@@ -184,13 +193,20 @@ class ServiceSupervisor {
 
     const dbPath = path.join(this.dataDir, "journal.sqlite");
     const databaseUrl = sqliteUrl(dbPath);
+    const targets = [
+      { name: "orchestration_api", url: "http://127.0.0.1:8000/health" },
+      { name: "journal_api", url: "http://127.0.0.1:8002/health" },
+      { name: "stt", url: "http://127.0.0.1:8001/health" },
+    ];
 
     try {
       this._spawnService({
         name: "stt",
         module: "stt.app:app",
         port: 8001,
-        env: {},
+        env: {
+          HF_HUB_DISABLE_SYMLINKS_WARNING: "1",
+        },
       });
 
       this._spawnService({
@@ -214,9 +230,50 @@ class ServiceSupervisor {
         },
       });
 
-      await this._waitForHealthy();
-      this.status.state = "running";
-      this._log("startAll:running");
+      await this._waitForHealthy({
+        targets,
+        requiredNames: ["orchestration_api", "journal_api"],
+        timeoutMs: this.packaged ? 180000 : 60000,
+        phase: "required",
+      });
+      const sttReady = this.status.serviceHealth.stt === true;
+      this.status.state = sttReady ? "running" : "degraded";
+      this.status.lastError = sttReady ? null : "STT is still warming up.";
+      this.status.pendingServices = sttReady ? [] : ["stt"];
+      this._log("startAll:core_ready", {
+        state: this.status.state,
+        pendingServices: this.status.pendingServices,
+      });
+
+      if (!sttReady) {
+        const warmupPromise = this._waitForHealthy({
+          targets,
+          requiredNames: ["stt"],
+          timeoutMs: this.packaged ? 300000 : 180000,
+          phase: "optional_stt",
+        });
+        this._optionalWarmupPromise = warmupPromise;
+        warmupPromise
+          .then(() => {
+            if (this._optionalWarmupPromise !== warmupPromise) {
+              return;
+            }
+            this.status.state = "running";
+            this.status.lastError = null;
+            this.status.pendingServices = [];
+            this._log("startAll:stt_ready");
+          })
+          .catch((error) => {
+            if (this._optionalWarmupPromise !== warmupPromise) {
+              return;
+            }
+            const message = error instanceof Error ? error.message : String(error);
+            this.status.state = "degraded";
+            this.status.lastError = message;
+            this.status.pendingServices = ["stt"];
+            this._log("startAll:stt_warmup_timeout", { message });
+          });
+      }
     } catch (error) {
       this.status.state = "error";
       this.status.lastError = error instanceof Error ? error.message : String(error);
@@ -228,6 +285,8 @@ class ServiceSupervisor {
 
   async stopAll() {
     this.status.state = "stopping";
+    this.status.pendingServices = [];
+    this._optionalWarmupPromise = null;
     this._log("stopAll:begin");
 
     const killPromises = Array.from(this.services.values()).map((service) =>
@@ -263,6 +322,7 @@ class ServiceSupervisor {
 
     await Promise.allSettled(killPromises);
     this.services.clear();
+    this.status.serviceHealth = {};
     this.status.state = "stopped";
     this._log("stopAll:done");
   }
@@ -319,6 +379,8 @@ class ServiceSupervisor {
       this._appendRunLogBuffer(name, "stderr", chunk);
     });
     child.on("exit", (code) => {
+      this.status.serviceHealth[name] = false;
+      this.status.pendingServices = Array.from(new Set([...this.status.pendingServices, name]));
       this._log("service:exit", { name, code: code ?? null });
       logStream.write(`\n[${new Date().toISOString()}] exited with code ${code}\n`);
       logStream.end();
@@ -333,41 +395,52 @@ class ServiceSupervisor {
     });
   }
 
-  async _waitForHealthy() {
-    const targets = [
-      "http://127.0.0.1:8000/health",
-      "http://127.0.0.1:8002/health",
-      "http://127.0.0.1:8001/health",
-    ];
-
+  async _waitForHealthy({ targets, requiredNames, timeoutMs, phase }) {
     const startedAt = Date.now();
-    const timeoutMs = 60000;
 
     while (Date.now() - startedAt < timeoutMs) {
       const checks = await Promise.all(
-        targets.map(async (url) => {
+        targets.map(async ({ name, url }) => {
           try {
             const response = await fetch(url);
-            return response.ok;
+            return { name, ok: response.ok };
           } catch {
-            return false;
+            return { name, ok: false };
           }
         })
       );
+      const checkMap = Object.fromEntries(checks.map(({ name, ok }) => [name, ok]));
+      const pendingNames = requiredNames.filter((name) => !checkMap[name]);
+      this.status.serviceHealth = {
+        ...this.status.serviceHealth,
+        ...checkMap,
+      };
+      this.status.pendingServices = pendingNames;
       this._log("health:poll", {
-        checks,
+        phase,
+        checks: checkMap,
+        pendingServices: pendingNames,
         elapsedMs: Date.now() - startedAt,
       });
 
-      if (checks.every(Boolean)) {
-        this._log("health:ready");
+      if (pendingNames.length === 0) {
+        this._log("health:ready", { phase });
         return;
       }
 
       await new Promise((resolve) => setTimeout(resolve, 800));
     }
 
-    throw new Error("Services did not become healthy in time.");
+    const pendingNames = requiredNames.filter((name) => this.status.serviceHealth[name] !== true);
+    this._log("health:timeout", {
+      phase,
+      timeoutMs,
+      pendingServices: pendingNames,
+      checks: this.status.serviceHealth,
+    });
+    throw new Error(
+      `Services did not become healthy in time. Pending: ${pendingNames.join(", ")}`
+    );
   }
 
   _log(message, context = {}) {
