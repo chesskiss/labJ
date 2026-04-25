@@ -21,11 +21,13 @@ import io
 import wave
 import queue
 import threading
-from typing import Callable
+from typing import TYPE_CHECKING, Any, Callable
 
 import requests  # type: ignore[import-untyped]
 import numpy as np
-import sounddevice as sd
+
+if TYPE_CHECKING:
+    pass
 
 
 class STTClient:
@@ -60,7 +62,7 @@ class STTClient:
         self.chunk_samples = int(chunk_duration * sample_rate)
 
         # State
-        self._stream: sd.InputStream | None = None
+        self._stream: Any | None = None
         self._recording = False
         self._audio_queue: queue.Queue[np.ndarray | None] = queue.Queue()
         self._processor_thread: threading.Thread | None = None
@@ -86,6 +88,17 @@ class STTClient:
         self._processor_thread.start()
 
         # Start audio stream
+        try:
+            import sounddevice as sd
+        except OSError as exc:
+            raise RuntimeError(
+                "Microphone capture requires PortAudio. Install the PortAudio runtime/library."
+            ) from exc
+        except ImportError as exc:
+            raise RuntimeError(
+                "Microphone capture requires the sounddevice package."
+            ) from exc
+
         self._stream = sd.InputStream(
             samplerate=self.sample_rate,
             channels=self.channels,
