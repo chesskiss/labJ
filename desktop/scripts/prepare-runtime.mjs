@@ -22,7 +22,7 @@ function run(command, args, cwd = repoRoot) {
   const result = spawnSync(command, args, {
     cwd,
     stdio: "inherit",
-    shell: process.platform === "win32",
+    shell: false,
     env: process.env,
   });
   if (result.status !== 0) {
@@ -33,7 +33,7 @@ function run(command, args, cwd = repoRoot) {
 function commandExists(command, args = ["--version"]) {
   const result = spawnSync(command, args, {
     stdio: "ignore",
-    shell: process.platform === "win32",
+    shell: false,
   });
   return result.status === 0;
 }
@@ -58,7 +58,7 @@ function readCommandOutput(command, args) {
   const result = spawnSync(command, args, {
     cwd: repoRoot,
     stdio: ["ignore", "pipe", "inherit"],
-    shell: process.platform === "win32",
+    shell: false,
     env: process.env,
     encoding: "utf8",
   });
