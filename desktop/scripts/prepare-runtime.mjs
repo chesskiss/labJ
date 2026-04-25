@@ -88,6 +88,9 @@ function copyWindowsPythonHome(pythonCommand) {
 }
 
 function installTargetedPackages(pythonExe) {
+  console.log("[prepare-runtime] bootstrapping pip...");
+  run(pythonExe, ["-m", "ensurepip", "--upgrade"]);
+
   console.log("[prepare-runtime] upgrading pip tooling...");
   run(pythonExe, ["-m", "pip", "install", "--upgrade", "pip", "setuptools", "wheel"]);
 
