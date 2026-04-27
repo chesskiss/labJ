@@ -121,6 +121,7 @@ function bundleTinyWhisperModel(pythonExe) {
       HF_HOME: path.join(runtimeRoot, "huggingface-build-cache"),
       HF_HUB_DISABLE_XET: "1",
       HF_HUB_DISABLE_SYMLINKS_WARNING: "1",
+      PYTHONPATH: bundledSitePackages,
     }
   );
 }

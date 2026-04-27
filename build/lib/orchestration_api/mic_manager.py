@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import deque
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 import os
 import queue
 import threading
@@ -114,7 +114,7 @@ class MicSessionManager:
             return
         with self._lock:
             self._enqueued_count += 1
-            self._last_transcript_at = datetime.now(UTC).isoformat()
+            self._last_transcript_at = datetime.now(timezone.utc).isoformat()
             self._append_event({"type": "transcript_enqueued", "text": cleaned})
         self._queue.put(cleaned)
 
@@ -211,7 +211,7 @@ class MicSessionManager:
 
     def _append_event(self, event: dict[str, Any]) -> None:
         enriched = {
-            "timestamp": datetime.now(UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             **event,
         }
         self._events.append(enriched)
