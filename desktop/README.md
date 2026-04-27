@@ -11,7 +11,8 @@ For installer builds, it bundles a Python runtime and ships `.env` from repo roo
 - Loads prebuilt UI from `ui/dist`.
 - Mic flow stays unchanged: UI button calls `/mic/start` and `/mic/stop`.
 - Packaged startup waits for `journal_api` and `orchestration_api` first, then lets `stt` continue warming up in the background.
-- When `WHISPER_MODEL` is not set in packaged mode, desktop defaults it to `tiny` to reduce first-run download/load time.
+- Windows installer builds pre-bundle the `faster-whisper-tiny` model so packaged STT does not need to download it on first launch.
+- When `WHISPER_MODEL` is not set in packaged mode, desktop defaults to the bundled `tiny` model path when available.
 
 ## Prerequisites
 - Node.js 18+

@@ -34,7 +34,8 @@
         "filter": [
           ".venv/**",
           "python/**",
-          "site-packages/**"
+          "site-packages/**",
+          "models/**"
         ]
       },
       {

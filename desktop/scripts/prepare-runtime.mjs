@@ -17,13 +17,18 @@ const bundledPythonExe = process.platform === "win32"
   ? path.join(bundledPythonDir, "python.exe")
   : path.join(bundledPythonDir, "bin", "python3");
 const bundledSitePackages = path.join(runtimeRoot, "site-packages");
+const bundledModelsDir = path.join(runtimeRoot, "models");
+const bundledTinyModelDir = path.join(bundledModelsDir, "faster-whisper-tiny");
 
-function run(command, args, cwd = repoRoot) {
+function run(command, args, cwd = repoRoot, envOverrides = {}) {
   const result = spawnSync(command, args, {
     cwd,
     stdio: "inherit",
     shell: false,
-    env: process.env,
+    env: {
+      ...process.env,
+      ...envOverrides,
+    },
   });
   if (result.status !== 0) {
     process.exit(result.status ?? 1);
@@ -101,6 +106,25 @@ function installTargetedPackages(pythonExe) {
   run(pythonExe, ["-m", "pip", "install", "--target", bundledSitePackages, "."]);
 }
 
+function bundleTinyWhisperModel(pythonExe) {
+  mkdirSync(bundledModelsDir, { recursive: true });
+  console.log("[prepare-runtime] pre-downloading faster-whisper-tiny model...");
+  const script = [
+    "from huggingface_hub import snapshot_download",
+    `snapshot_download(repo_id='Systran/faster-whisper-tiny', local_dir=r'''${bundledTinyModelDir}''', local_dir_use_symlinks=False)`,
+  ].join("\n");
+  run(
+    pythonExe,
+    ["-c", script],
+    repoRoot,
+    {
+      HF_HOME: path.join(runtimeRoot, "huggingface-build-cache"),
+      HF_HUB_DISABLE_XET: "1",
+      HF_HUB_DISABLE_SYMLINKS_WARNING: "1",
+    }
+  );
+}
+
 if (existsSync(runtimeRoot)) {
   rmSync(runtimeRoot, { recursive: true, force: true });
 }
@@ -117,6 +141,7 @@ if (commandExists(uvCommand)) {
     }
     copyWindowsPythonHome(pythonCommand);
     installTargetedPackages(bundledPythonExe);
+    bundleTinyWhisperModel(bundledPythonExe);
   } else {
     console.log("[prepare-runtime] creating venv with uv...");
     run(uvCommand, ["venv", venvDir]);
@@ -136,6 +161,7 @@ if (commandExists(uvCommand)) {
   if (process.platform === "win32") {
     copyWindowsPythonHome(pythonCommand);
     installTargetedPackages(bundledPythonExe);
+    bundleTinyWhisperModel(bundledPythonExe);
   } else {
     const venvArgs = process.platform === "win32" && pythonCommand === "py"
       ? ["-3", "-m", "venv", venvDir]

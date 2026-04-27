@@ -300,6 +300,7 @@ async function startRuntimeAndUi() {
 
   let llmApiKey = readEnvValue(paths.envFilePath, "LLM_API_KEY");
   const whisperModel = readEnvValue(paths.envFilePath, "WHISPER_MODEL");
+  const bundledWhisperModel = path.join(paths.runtimeRoot, "models", "faster-whisper-tiny");
   if (!llmApiKey || !llmApiKey.trim().length) {
     logMain("startup:llm_api_key_missing_prompt");
     llmApiKey = await promptForLlmApiKey();
@@ -332,7 +333,9 @@ async function startRuntimeAndUi() {
     runLogFile,
     envOverrides: {
       LLM_API_KEY: llmApiKey,
-      ...(paths.packaged && !whisperModel ? { WHISPER_MODEL: "tiny" } : {}),
+      ...(paths.packaged && !whisperModel
+        ? { WHISPER_MODEL: fs.existsSync(bundledWhisperModel) ? bundledWhisperModel : "tiny" }
+        : {}),
     },
   });
 
