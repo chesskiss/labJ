@@ -9,6 +9,11 @@ const PORTS = {
   stt: 8001,
 };
 
+const hasSingleInstanceLock = app.requestSingleInstanceLock();
+if (!hasSingleInstanceLock) {
+  app.quit();
+}
+
 let mainWindow = null;
 let supervisor = null;
 let mainLogFile = null;
@@ -379,6 +384,16 @@ app.whenReady().then(async () => {
       void startRuntimeAndUi();
     }
   });
+});
+
+app.on("second-instance", () => {
+  logMain("app:second-instance");
+  if (mainWindow) {
+    if (mainWindow.isMinimized()) {
+      mainWindow.restore();
+    }
+    mainWindow.focus();
+  }
 });
 
 app.on("before-quit", async (event) => {

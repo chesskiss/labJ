@@ -63,8 +63,8 @@ One-click local desktop launcher on macOS:
 From repo root (`labJ`):
 
 ```bash
-cp launch/.env.full.example launch/.env.full
-docker compose --env-file launch/.env.full -f launch/docker-compose.full.yml up --build -d
+cp launch/.env.example launch/.env
+docker compose --env-file launch/.env -f launch/docker-compose.full.yml up --build -d
 ```
 
 Open `http://localhost:5173`.

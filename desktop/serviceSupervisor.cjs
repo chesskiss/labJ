@@ -18,6 +18,30 @@ function commandExists(command, args = ["--version"]) {
   return result.status === 0;
 }
 
+function killProcessTree(processRef) {
+  if (!processRef || processRef.killed || !processRef.pid) {
+    return;
+  }
+
+  if (process.platform === "win32") {
+    try {
+      spawnSync("taskkill", ["/pid", String(processRef.pid), "/t", "/f"], {
+        stdio: "ignore",
+        shell: true,
+      });
+      return;
+    } catch {
+      // fall through to direct kill
+    }
+  }
+
+  try {
+    processRef.kill("SIGKILL");
+  } catch {
+    // noop
+  }
+}
+
 function parseDotEnvFile(envFilePath) {
   if (!envFilePath || !fs.existsSync(envFilePath)) {
     return {};
@@ -190,6 +214,8 @@ class ServiceSupervisor {
 
     fs.mkdirSync(this.logsDir, { recursive: true });
     fs.mkdirSync(this.dataDir, { recursive: true });
+    const hfHomeDir = path.join(this.dataDir, "huggingface");
+    fs.mkdirSync(hfHomeDir, { recursive: true });
 
     const dbPath = path.join(this.dataDir, "journal.sqlite");
     const databaseUrl = sqliteUrl(dbPath);
@@ -205,7 +231,9 @@ class ServiceSupervisor {
         module: "stt.app:app",
         port: 8001,
         env: {
+          HF_HOME: hfHomeDir,
           HF_HUB_DISABLE_SYMLINKS_WARNING: "1",
+          HF_HUB_DISABLE_XET: "1",
         },
       });
 
@@ -298,11 +326,7 @@ class ServiceSupervisor {
 
         const processRef = service.process;
         const timeout = setTimeout(() => {
-          try {
-            processRef.kill("SIGKILL");
-          } catch {
-            // noop
-          }
+          killProcessTree(processRef);
           resolve();
         }, 3000);
 
@@ -312,7 +336,11 @@ class ServiceSupervisor {
         });
 
         try {
-          processRef.kill("SIGTERM");
+          if (process.platform === "win32") {
+            killProcessTree(processRef);
+          } else {
+            processRef.kill("SIGTERM");
+          }
         } catch {
           clearTimeout(timeout);
           resolve();
