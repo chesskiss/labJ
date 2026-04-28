@@ -18,6 +18,7 @@ let mainWindow = null;
 let supervisor = null;
 let mainLogFile = null;
 let runLogFile = null;
+let isShuttingDown = false;
 
 function logMain(message, context = {}) {
   const line = `[${new Date().toISOString()}] [main] ${message} ${
@@ -245,6 +246,18 @@ function createBootWindow() {
     mainWindow.show();
   });
 
+  mainWindow.on("close", (event) => {
+    if (isShuttingDown) {
+      return;
+    }
+    if (process.platform === "darwin") {
+      return;
+    }
+
+    event.preventDefault();
+    void shutdownAndExit("window-close");
+  });
+
   mainWindow.webContents.on("did-finish-load", () => {
     logMain("webContents:did-finish-load", { url: mainWindow.webContents.getURL() });
   });
@@ -257,6 +270,25 @@ function createBootWindow() {
   mainWindow.webContents.on("render-process-gone", (_event, details) => {
     logMain("webContents:render-process-gone", details || {});
   });
+}
+
+async function shutdownAndExit(reason) {
+  if (isShuttingDown) {
+    return;
+  }
+
+  isShuttingDown = true;
+  logMain("shutdown:begin", { reason });
+
+  try {
+    if (supervisor) {
+      await supervisor.stopAll();
+      supervisor = null;
+    }
+  } finally {
+    logMain("shutdown:exit", { reason });
+    app.exit(0);
+  }
 }
 
 async function loadUi() {
@@ -401,14 +433,9 @@ app.on("second-instance", () => {
 
 app.on("before-quit", async (event) => {
   logMain("app:before-quit");
-  if (supervisor) {
+  if (supervisor && !isShuttingDown) {
     event.preventDefault();
-    try {
-      await supervisor.stopAll();
-    } finally {
-      supervisor = null;
-      app.exit(0);
-    }
+    await shutdownAndExit("before-quit");
   }
 });
 

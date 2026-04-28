@@ -1,0 +1,402 @@
+[2026-04-27T23:31:23.879Z] [main] startRuntimeAndUi:paths {"packaged":false,"sourceRoot":"/Users/arnoldcheskis/Documents/Projects/labJ","dataDir":"/Users/arnoldcheskis/Documents/Projects/labJ/data","envFilePath":"/Users/arnoldcheskis/Documents/Projects/labJ/.env","runtimeRoot":"/Users/arnoldcheskis/Documents/Projects/labJ/desktop/runtime","logsDir":"/Users/arnoldcheskis/Library/Application Support/labj-desktop/logs","runLogFile":"/Users/arnoldcheskis/Documents/Projects/labJ/labj_run.log"}
+[2026-04-27T23:31:23.880Z] [main] supervisor:startAll:begin 
+[2026-04-27T23:31:23.880Z] [supervisor] startAll:begin {"sourceRoot":"/Users/arnoldcheskis/Documents/Projects/labJ","dataDir":"/Users/arnoldcheskis/Documents/Projects/labJ/data","envFilePath":"/Users/arnoldcheskis/Documents/Projects/labJ/.env","runtimeRoot":"/Users/arnoldcheskis/Documents/Projects/labJ/desktop/runtime","runner":{"command":"/Users/arnoldcheskis/Documents/Projects/labJ/desktop/runtime/.venv/bin/python","useUv":false,"bundled":true,"pythonPathEntries":[]},"packaged":false}
+[2026-04-27T23:31:23.882Z] [supervisor] service:spawned {"name":"stt","module":"stt.app:app","port":8001,"command":"/Users/arnoldcheskis/Documents/Projects/labJ/desktop/runtime/.venv/bin/python","args":["-m","uvicorn","stt.app:app","--host","127.0.0.1","--port","8001"],"cwd":"/Users/arnoldcheskis/Documents/Projects/labJ","pid":21542,"logFile":"/Users/arnoldcheskis/Library/Application Support/labj-desktop/logs/stt.log"}
+[2026-04-27T23:31:23.883Z] [supervisor] service:spawned {"name":"journal_api","module":"journal_api.app:app","port":8002,"command":"/Users/arnoldcheskis/Documents/Projects/labJ/desktop/runtime/.venv/bin/python","args":["-m","uvicorn","journal_api.app:app","--host","127.0.0.1","--port","8002"],"cwd":"/Users/arnoldcheskis/Documents/Projects/labJ","pid":21544,"logFile":"/Users/arnoldcheskis/Library/Application Support/labj-desktop/logs/journal_api.log"}
+[2026-04-27T23:31:23.883Z] [supervisor] service:spawned {"name":"orchestration_api","module":"orchestration_api.app:app","port":8000,"command":"/Users/arnoldcheskis/Documents/Projects/labJ/desktop/runtime/.venv/bin/python","args":["-m","uvicorn","orchestration_api.app:app","--host","127.0.0.1","--port","8000"],"cwd":"/Users/arnoldcheskis/Documents/Projects/labJ","pid":21545,"logFile":"/Users/arnoldcheskis/Library/Application Support/labj-desktop/logs/orchestration_api.log"}
+[2026-04-27T23:31:23.933Z] [supervisor] health:poll {"phase":"required","checks":{"orchestration_api":false,"journal_api":false,"stt":false},"pendingServices":["orchestration_api","journal_api"],"elapsedMs":49}
+[2026-04-27T23:31:24.238Z] [main] webContents:did-finish-load {"url":"data:text/html;charset=utf-8,%0A%20%20%20%20%3Chtml%3E%0A%20%20%20%20%20%20%3Cbody%20style%3D%22font-family%3A%20sans-serif%3B%20padding%3A%2024px%3B%22%3E%0A%20%20%20%20%20%20%20%20%3Ch2%3EStarting%20LabJ%20runtime...%3C%2Fh2%3E%0A%20%20%20%20%20%20%20%20%3Cp%3ELaunching%20STT%2C%20orchestration%20API%2C%20and%20journal%20API.%3C%2Fp%3E%0A%20%20%20%20%20%20%3C%2Fbody%3E%0A%20%20%20%20%3C%2Fhtml%3E%0A%20%20"}
+[2026-04-27T23:31:24.239Z] [main] createBootWindow:ready-to-show 
+[2026-04-27T23:31:24.301Z] [main] webContents:console-message {"level":2,"message":"%cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security\n  Policy set or a policy with \"unsafe-eval\" enabled. This exposes users of\n  this app to unnecessary security risks.\n\nFor more information and help, consult\nhttps://electronjs.org/docs/tutorial/security.\nThis warning will not show up\nonce the app is packaged.","line":2,"sourceId":"node:electron/js2c/sandbox_bundle"}
+[2026-04-27T23:31:24.740Z] [supervisor] health:poll {"phase":"required","checks":{"orchestration_api":false,"journal_api":false,"stt":false},"pendingServices":["orchestration_api","journal_api"],"elapsedMs":856}
+[2026-04-27T23:31:25.547Z] [supervisor] health:poll {"phase":"required","checks":{"orchestration_api":false,"journal_api":false,"stt":false},"pendingServices":["orchestration_api","journal_api"],"elapsedMs":1663}
+[2026-04-27T23:31:26.354Z] [supervisor] health:poll {"phase":"required","checks":{"orchestration_api":false,"journal_api":false,"stt":false},"pendingServices":["orchestration_api","journal_api"],"elapsedMs":2470}
+[2026-04-27T23:31:27.160Z] [supervisor] health:poll {"phase":"required","checks":{"orchestration_api":false,"journal_api":false,"stt":false},"pendingServices":["orchestration_api","journal_api"],"elapsedMs":3276}
+[2026-04-27T23:31:27.965Z] [supervisor] health:poll {"phase":"required","checks":{"orchestration_api":false,"journal_api":false,"stt":false},"pendingServices":["orchestration_api","journal_api"],"elapsedMs":4081}
+[2026-04-27T23:31:28.770Z] [supervisor] health:poll {"phase":"required","checks":{"orchestration_api":false,"journal_api":false,"stt":false},"pendingServices":["orchestration_api","journal_api"],"elapsedMs":4886}
+[2026-04-27T23:31:29.574Z] [supervisor] health:poll {"phase":"required","checks":{"orchestration_api":false,"journal_api":false,"stt":false},"pendingServices":["orchestration_api","journal_api"],"elapsedMs":5690}
+[2026-04-27T23:31:29.585Z] [journal_api:stderr] INFO:     Started server process [21544]
+[2026-04-27T23:31:29.585Z] [journal_api:stderr] INFO:     Waiting for application startup.
+[2026-04-27T23:31:29.586Z] [journal_api:stderr] INFO:     Application startup complete.
+[2026-04-27T23:31:29.586Z] [journal_api:stderr] INFO:     Uvicorn running on http://127.0.0.1:8002 (Press CTRL+C to quit)
+[2026-04-27T23:31:30.403Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:30.405Z] [supervisor] health:poll {"phase":"required","checks":{"orchestration_api":false,"journal_api":true,"stt":false},"pendingServices":["orchestration_api"],"elapsedMs":6521}
+[2026-04-27T23:31:31.211Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:31.211Z] [supervisor] health:poll {"phase":"required","checks":{"orchestration_api":false,"journal_api":true,"stt":false},"pendingServices":["orchestration_api"],"elapsedMs":7327}
+[2026-04-27T23:31:31.509Z] [orchestration_api:stderr] INFO:     Started server process [21545]
+[2026-04-27T23:31:31.509Z] [orchestration_api:stderr] INFO:     Waiting for application startup.
+[2026-04-27T23:31:31.510Z] [orchestration_api:stderr] INFO:     Application startup complete.
+[2026-04-27T23:31:31.510Z] [orchestration_api:stderr] INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
+[2026-04-27T23:31:32.019Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:32.589Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:32.589Z] [supervisor] health:poll {"phase":"required","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":[],"elapsedMs":8705}
+[2026-04-27T23:31:32.589Z] [supervisor] health:ready {"phase":"required"}
+[2026-04-27T23:31:32.589Z] [supervisor] startAll:core_ready {"state":"degraded","pendingServices":["stt"]}
+[2026-04-27T23:31:32.590Z] [main] supervisor:startAll:done 
+[2026-04-27T23:31:32.590Z] [main] loadUi:start {"uiIndexPath":"/Users/arnoldcheskis/Documents/Projects/labJ/ui/dist/index.html"}
+[2026-04-27T23:31:32.592Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:32.593Z] [orchestration_api:stdout] INFO:     127.0.0.1:50004 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:32.593Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":4}
+[2026-04-27T23:31:32.640Z] [main] webContents:did-finish-load {"url":"file:///Users/arnoldcheskis/Documents/Projects/labJ/ui/dist/index.html"}
+[2026-04-27T23:31:32.641Z] [main] loadUi:done {"uiIndexPath":"/Users/arnoldcheskis/Documents/Projects/labJ/ui/dist/index.html"}
+[2026-04-27T23:31:32.657Z] [main] webContents:console-message {"level":2,"message":"%cElectron Security Warning (Insecure Content-Security-Policy) font-weight: bold; This renderer process has either no Content Security\n  Policy set or a policy with \"unsafe-eval\" enabled. This exposes users of\n  this app to unnecessary security risks.\n\nFor more information and help, consult\nhttps://electronjs.org/docs/tutorial/security.\nThis warning will not show up\nonce the app is packaged.","line":2,"sourceId":"node:electron/js2c/sandbox_bundle"}
+[2026-04-27T23:31:32.674Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions?limit=100 HTTP/1.1" 200 OK
+[2026-04-27T23:31:32.681Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:32.682Z] [journal_api:stdout] INFO:     127.0.0.1:50007 - "GET /journal/sessions/2f383a5d-d83b-45fc-9b6f-78b8f4a19bbf/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:32.682Z] [journal_api:stdout] INFO:     127.0.0.1:50010 - "GET /journal/sessions/00664d4b-3590-45f3-8bad-4bbc2c5c45c3/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:32.682Z] [journal_api:stdout] INFO:     127.0.0.1:50008 - "GET /journal/sessions/7b7f9f07-70f2-4868-8f34-d7befa9492f7/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:32.683Z] [journal_api:stdout] INFO:     127.0.0.1:50009 - "GET /journal/sessions/b9514dd4-9ea9-4b71-87c1-959e8cb95e17/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:32.683Z] [journal_api:stdout] INFO:     127.0.0.1:50011 - "GET /journal/sessions/2a4550ae-9dc8-4d31-996b-27c569eaae5f/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:32.685Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/11111111-1111-1111-1111-111111111111/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:32.706Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/history?limit=100 HTTP/1.1" 200 OK
+[2026-04-27T23:31:33.402Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:33.402Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:33.403Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":814}
+[2026-04-27T23:31:34.211Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:34.212Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:34.212Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":1623}
+[2026-04-27T23:31:34.445Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:35.016Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:35.016Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:35.017Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":2428}
+[2026-04-27T23:31:35.439Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:35.819Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:35.820Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:35.820Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":3231}
+[2026-04-27T23:31:36.436Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:36.627Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:36.627Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:36.628Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":4039}
+[2026-04-27T23:31:37.436Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:37.437Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:37.438Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:37.438Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":4849}
+[2026-04-27T23:31:38.245Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:38.247Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:38.247Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":5658}
+[2026-04-27T23:31:38.432Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:39.002Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:39.053Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:39.053Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:39.053Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":6464}
+[2026-04-27T23:31:39.709Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:39.856Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:39.856Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:39.857Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":7268}
+[2026-04-27T23:31:40.660Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:40.661Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:40.661Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":8072}
+[2026-04-27T23:31:41.433Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:41.468Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:41.469Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:41.469Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":8880}
+[2026-04-27T23:31:42.276Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:42.277Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:42.278Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":9689}
+[2026-04-27T23:31:42.437Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:43.081Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:43.082Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:43.083Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":10494}
+[2026-04-27T23:31:43.435Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:43.886Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:43.886Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:43.887Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":11298}
+[2026-04-27T23:31:44.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:44.691Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:44.691Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:44.692Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":12103}
+[2026-04-27T23:31:44.708Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:45.497Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:45.498Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:45.498Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":12909}
+[2026-04-27T23:31:45.710Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:46.321Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:46.322Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:46.322Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":13733}
+[2026-04-27T23:31:47.127Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:47.128Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:47.128Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":14539}
+[2026-04-27T23:31:47.435Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:47.936Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:47.937Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:47.937Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":15348}
+[2026-04-27T23:31:48.433Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:48.743Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:48.744Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:48.744Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":16155}
+[2026-04-27T23:31:49.433Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:49.515Z] [stt:stderr] INFO:     Started server process [21542]
+[2026-04-27T23:31:49.515Z] [stt:stderr] INFO:     Waiting for application startup.
+[2026-04-27T23:31:49.515Z] [stt:stderr] INFO:stt.app:Loading model 'base' on cpu with compute_type=int8...
+[2026-04-27T23:31:49.549Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:49.550Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:49.550Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":16961}
+[2026-04-27T23:31:49.932Z] [stt:stderr] INFO:httpx:HTTP Request: GET https://huggingface.co/api/models/Systran/faster-whisper-base/revision/main "HTTP/1.1 200 OK"
+[2026-04-27T23:31:50.204Z] [stt:stderr] INFO:httpx:HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/config.json "HTTP/1.1 307 Temporary Redirect"
+[2026-04-27T23:31:50.205Z] [stt:stderr] Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[2026-04-27T23:31:50.205Z] [stt:stderr] WARNING:huggingface_hub.utils._http:Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+[2026-04-27T23:31:50.220Z] [stt:stderr] INFO:httpx:HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/model.bin "HTTP/1.1 302 Found"
+[2026-04-27T23:31:50.230Z] [stt:stderr] INFO:httpx:HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/vocabulary.txt "HTTP/1.1 307 Temporary Redirect"
+[2026-04-27T23:31:50.231Z] [stt:stderr] INFO:httpx:HTTP Request: HEAD https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/tokenizer.json "HTTP/1.1 307 Temporary Redirect"
+[2026-04-27T23:31:50.249Z] [stt:stderr] INFO:httpx:HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-base/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/tokenizer.json "HTTP/1.1 200 OK"
+[2026-04-27T23:31:50.257Z] [stt:stderr] INFO:httpx:HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-base/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/vocabulary.txt "HTTP/1.1 200 OK"
+[2026-04-27T23:31:50.273Z] [stt:stderr] INFO:httpx:HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-base/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/config.json "HTTP/1.1 200 OK"
+[2026-04-27T23:31:50.328Z] [stt:stderr] INFO:httpx:HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-base/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/tokenizer.json "HTTP/1.1 200 OK"
+[2026-04-27T23:31:50.335Z] [stt:stderr] INFO:httpx:HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-base/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/vocabulary.txt "HTTP/1.1 200 OK"
+[2026-04-27T23:31:50.345Z] [stt:stderr] INFO:httpx:HTTP Request: GET https://huggingface.co/api/resolve-cache/models/Systran/faster-whisper-base/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/config.json "HTTP/1.1 200 OK"
+[2026-04-27T23:31:50.354Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:50.355Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:50.355Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":17766}
+[2026-04-27T23:31:50.412Z] [stt:stderr] INFO:httpx:HTTP Request: GET https://huggingface.co/Systran/faster-whisper-base/resolve/ebe41f70d5b6dfa9166e2c581c45c9c0cfc57b66/model.bin "HTTP/1.1 302 Found"
+[2026-04-27T23:31:50.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:50.636Z] [stt:stderr] INFO:httpx:HTTP Request: GET https://cas-bridge.xethub.hf.co/xet-bridge-us/655f20e8a81ce416b9fda508/0c4d8d814973160f53608ff0aa1618a90abbce9ed632bbc54930475ba82ce973?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD&X-Amz-Credential=cas%2F20260427%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260427T232901Z&X-Amz-Expires=3600&X-Amz-Signature=5781928f53a03c3a51d6ce03544bab7fbccf27a0a360199f513e07e22d4b095d&X-Amz-SignedHeaders=host&X-Xet-Cas-Uid=public&response-content-disposition=inline%3B+filename*%3DUTF-8%27%27model.bin%3B+filename%3D%22model.bin%22%3B&response-content-type=application%2Foctet-stream&x-amz-checksum-mode=ENABLED&x-id=GetObject&Expires=1777336141&Policy=eyJTdGF0ZW1lbnQiOlt7IkNvbmRpdGlvbiI6eyJEYXRlTGVzc1RoYW4iOnsiQVdTOkVwb2NoVGltZSI6MTc3NzMzNjE0MX19LCJSZXNvdXJjZSI6Imh0dHBzOi8vY2FzLWJyaWRnZS54ZXRodWIuaGYuY28veGV0LWJyaWRnZS11cy82NTVmMjBlOGE4MWNlNDE2YjlmZGE1MDgvMGM0ZDhkODE0OTczMTYwZjUzNjA4ZmYwYWExNjE4YTkwYWJiY2U5ZWQ2MzJiYmM1NDkzMDQ3NWJhODJjZTk3MyoifV19&Signature=gHICxVIWV7ZqzNMcZ0mbh1w6bQoNXZKJIazNKOj9fPiCkpEiL%7EtebQWeJYiovdfqRAxYnvZaeCzjO8YZN9Nw-FOwtUgySd2AiBx6okmU8zSc%7EjLMzlL8VLfUsI7UquhvhEBbD7ZoWhLqOw9tH6QdZdAPUCsEH6BjZiI0yd2uOVOkXLtxcXxulN48qy8sVOA-46bCKzQnvP5%7EJ8k%7EbgXk%7ETXCDk%7Ejz5fpVK1vuqJAd2g%7EobFkv1YJEDZ2sUYbkRIHcJyZc9qHhAzsVO4IweAYDxwWYV19iK5K%7E2-9Gl2rmj874L7ZDC6bLQlQOJyC48DHDbsCKpEzT6nVifdVQX0ucw__&Key-Pair-Id=K2L8F4GPSG1IFC "HTTP/1.1 200 OK"
+[2026-04-27T23:31:51.162Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:51.163Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:51.164Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":18575}
+[2026-04-27T23:31:51.437Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:51.970Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:51.972Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:51.972Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":19383}
+[2026-04-27T23:31:52.437Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:52.787Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:52.788Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:52.788Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":20199}
+[2026-04-27T23:31:53.438Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:53.597Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:53.597Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:53.599Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":21010}
+[2026-04-27T23:31:54.405Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:54.405Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:54.406Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":21817}
+[2026-04-27T23:31:54.439Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:55.210Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:55.211Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:55.211Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":false},"pendingServices":["stt"],"elapsedMs":22622}
+[2026-04-27T23:31:55.432Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:55.652Z] [stt:stderr] INFO:stt.app:Model loaded in 6.1s
+[2026-04-27T23:31:55.653Z] [stt:stderr] INFO:     Application startup complete.
+[2026-04-27T23:31:55.653Z] [stt:stderr] INFO:     Uvicorn running on http://127.0.0.1:8001 (Press CTRL+C to quit)
+[2026-04-27T23:31:56.018Z] [orchestration_api:stdout] INFO:     127.0.0.1:50002 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:56.019Z] [journal_api:stdout] INFO:     127.0.0.1:49995 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:56.023Z] [stt:stdout] INFO:     127.0.0.1:50064 - "GET /health HTTP/1.1" 200 OK
+[2026-04-27T23:31:56.024Z] [supervisor] health:poll {"phase":"optional_stt","checks":{"orchestration_api":true,"journal_api":true,"stt":true},"pendingServices":[],"elapsedMs":23435}
+[2026-04-27T23:31:56.024Z] [supervisor] health:ready {"phase":"optional_stt"}
+[2026-04-27T23:31:56.025Z] [supervisor] startAll:stt_ready 
+[2026-04-27T23:31:56.437Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:57.437Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:58.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:31:59.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:00.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:01.432Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:02.435Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:03.432Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:04.435Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:05.432Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:06.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:07.440Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:08.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:09.442Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:10.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:11.445Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:12.437Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:13.435Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:14.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:15.436Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:16.433Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:17.436Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:18.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:19.436Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:20.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:21.438Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:22.438Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:23.437Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:24.436Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:25.438Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:26.433Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:27.438Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:28.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:29.435Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:30.436Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:31.445Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:32.432Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:33.436Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:34.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:35.437Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:36.433Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:37.443Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:38.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:39.439Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:40.434Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:41.438Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:42.455Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:43.432Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:44.435Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:32:45.436Z] [journal_api:stdout] INFO:     127.0.0.1:50006 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:36.309Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:36.710Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:37.711Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:39.435Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:40.433Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:41.433Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:42.432Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:43.435Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:44.433Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:44.709Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:45.711Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:46.711Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:47.708Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:48.137Z] [orchestration_api:stdout] [STTClient] starting (api_url=http://localhost:8001/transcribe, sample_rate=16000, silence_threshold=0.01)
+[2026-04-27T23:33:48.707Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:48.941Z] [orchestration_api:stdout] INFO:     127.0.0.1:50203 - "POST /mic/start HTTP/1.1" 200 OK
+[2026-04-27T23:33:49.950Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:50.952Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:51.953Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:52.953Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:53.618Z] [stt:stderr] INFO:faster_whisper:Processing audio with duration 00:01.500
+[2026-04-27T23:33:53.950Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:54.562Z] [stt:stderr] INFO:faster_whisper:VAD filter removed 00:00.000 of audio
+[2026-04-27T23:33:54.948Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:55.085Z] [stt:stdout] INFO:     127.0.0.1:50205 - "POST /transcribe?vad_filter=true&language=en HTTP/1.1" 200 OK
+[2026-04-27T23:33:55.085Z] [orchestration_api:stdout] [STTClient] transcript: testing
+[2026-04-27T23:33:55.086Z] [orchestration_api:stdout] [LLM] parser configured=True
+[2026-04-27T23:33:55.086Z] [orchestration_api:stdout] [LLM] calling chat.completions model=llama-3.3-70b-versatile base_url=https://api.groq.com/openai/v1
+[2026-04-27T23:33:55.888Z] [orchestration_api:stdout] [LLM] response received
+[2026-04-27T23:33:55.888Z] [orchestration_api:stdout] [LLM] response content length=66
+[2026-04-27T23:33:55.888Z] [orchestration_api:stdout] [LLM] raw content={
+[2026-04-27T23:33:55.888Z] [orchestration_api:stdout]   "kind": "clarification_needed",
+[2026-04-27T23:33:55.888Z] [orchestration_api:stdout]    "status": "not_a_command"
+[2026-04-27T23:33:55.888Z] [orchestration_api:stdout] }
+[2026-04-27T23:33:55.889Z] [orchestration_api:stdout] [LLM] parse success
+[2026-04-27T23:33:57.173Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:57.192Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "POST /journal/entries HTTP/1.1" 200 OK
+[2026-04-27T23:33:57.198Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/history?limit=100 HTTP/1.1" 200 OK
+[2026-04-27T23:33:57.202Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/history?limit=100 HTTP/1.1" 200 OK
+[2026-04-27T23:33:58.206Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:59.208Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:33:59.891Z] [stt:stderr] INFO:faster_whisper:Processing audio with duration 00:00.900
+[2026-04-27T23:33:59.894Z] [stt:stderr] INFO:faster_whisper:VAD filter removed 00:00.000 of audio
+[2026-04-27T23:34:00.203Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:00.445Z] [stt:stdout] INFO:     127.0.0.1:50208 - "POST /transcribe?vad_filter=true&language=en HTTP/1.1" 200 OK
+[2026-04-27T23:34:01.203Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:02.207Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:02.304Z] [stt:stderr] INFO:faster_whisper:Processing audio with duration 00:01.600
+[2026-04-27T23:34:02.310Z] [stt:stderr] INFO:faster_whisper:VAD filter removed 00:00.000 of audio
+[2026-04-27T23:34:02.798Z] [stt:stdout] INFO:     127.0.0.1:50210 - "POST /transcribe?vad_filter=true&language=en HTTP/1.1" 200 OK
+[2026-04-27T23:34:02.799Z] [orchestration_api:stdout] [STTClient] transcript: at Experiment.
+[2026-04-27T23:34:02.799Z] [orchestration_api:stdout] [LLM] parser configured=True
+[2026-04-27T23:34:02.799Z] [orchestration_api:stdout] [LLM] calling chat.completions model=llama-3.3-70b-versatile base_url=https://api.groq.com/openai/v1
+[2026-04-27T23:34:03.032Z] [orchestration_api:stdout] [LLM] response received
+[2026-04-27T23:34:03.032Z] [orchestration_api:stdout] [LLM] response content length=111
+[2026-04-27T23:34:03.032Z] [orchestration_api:stdout] [LLM] raw content={
+[2026-04-27T23:34:03.032Z] [orchestration_api:stdout]   "kind": "note_capture",
+[2026-04-27T23:34:03.032Z] [orchestration_api:stdout]    "status": "ready",
+[2026-04-27T23:34:03.032Z] [orchestration_api:stdout]    "note": {
+[2026-04-27T23:34:03.032Z] [orchestration_api:stdout]       "content": "at Experiment. testing"
+[2026-04-27T23:34:03.032Z] [orchestration_api:stdout]    }
+[2026-04-27T23:34:03.032Z] [orchestration_api:stdout] }
+[2026-04-27T23:34:03.033Z] [orchestration_api:stdout] [LLM] parse success
+[2026-04-27T23:34:03.205Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:03.215Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/history?limit=100 HTTP/1.1" 200 OK
+[2026-04-27T23:34:03.225Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/history?limit=100 HTTP/1.1" 200 OK
+[2026-04-27T23:34:04.227Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:05.224Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:06.226Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:08.857Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:08.869Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "POST /journal/entries HTTP/1.1" 200 OK
+[2026-04-27T23:34:08.874Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/history?limit=100 HTTP/1.1" 200 OK
+[2026-04-27T23:34:08.881Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/history?limit=100 HTTP/1.1" 200 OK
+[2026-04-27T23:34:09.887Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:10.887Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:11.886Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:12.886Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:13.884Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:13.904Z] [stt:stderr] INFO:faster_whisper:Processing audio with duration 00:02.800
+[2026-04-27T23:34:13.914Z] [stt:stderr] INFO:faster_whisper:VAD filter removed 00:00.000 of audio
+[2026-04-27T23:34:14.429Z] [stt:stdout] INFO:     127.0.0.1:50216 - "POST /transcribe?vad_filter=true&language=en HTTP/1.1" 200 OK
+[2026-04-27T23:34:14.430Z] [orchestration_api:stdout] [STTClient] transcript: New results seemed unlikely.
+[2026-04-27T23:34:14.430Z] [orchestration_api:stdout] [LLM] parser configured=True
+[2026-04-27T23:34:14.430Z] [orchestration_api:stdout] [LLM] calling chat.completions model=llama-3.3-70b-versatile base_url=https://api.groq.com/openai/v1
+[2026-04-27T23:34:14.653Z] [orchestration_api:stdout] [LLM] response received
+[2026-04-27T23:34:14.653Z] [orchestration_api:stdout] [LLM] response content length=117
+[2026-04-27T23:34:14.653Z] [orchestration_api:stdout] [LLM] raw content={
+[2026-04-27T23:34:14.653Z] [orchestration_api:stdout]   "kind": "note_capture",
+[2026-04-27T23:34:14.653Z] [orchestration_api:stdout]    "status": "ready",
+[2026-04-27T23:34:14.653Z] [orchestration_api:stdout]    "note": {
+[2026-04-27T23:34:14.653Z] [orchestration_api:stdout]       "content": "New results seemed unlikely."
+[2026-04-27T23:34:14.653Z] [orchestration_api:stdout]    }
+[2026-04-27T23:34:14.653Z] [orchestration_api:stdout] }
+[2026-04-27T23:34:14.654Z] [orchestration_api:stdout] [LLM] parse success
+[2026-04-27T23:34:14.884Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:14.896Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/history?limit=100 HTTP/1.1" 200 OK
+[2026-04-27T23:34:14.904Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/history?limit=100 HTTP/1.1" 200 OK
+[2026-04-27T23:34:15.905Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:16.906Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:17.906Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:18.905Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:19.907Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:20.905Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:20.907Z] [stt:stderr] INFO:faster_whisper:Processing audio with duration 00:01.500
+[2026-04-27T23:34:20.913Z] [stt:stderr] INFO:faster_whisper:VAD filter removed 00:00.000 of audio
+[2026-04-27T23:34:21.424Z] [stt:stdout] INFO:     127.0.0.1:50234 - "POST /transcribe?vad_filter=true&language=en HTTP/1.1" 200 OK
+[2026-04-27T23:34:21.424Z] [orchestration_api:stdout] [STTClient] transcript: what happens next.
+[2026-04-27T23:34:21.424Z] [orchestration_api:stdout] [LLM] parser configured=True
+[2026-04-27T23:34:21.424Z] [orchestration_api:stdout] [LLM] calling chat.completions model=llama-3.3-70b-versatile base_url=https://api.groq.com/openai/v1
+[2026-04-27T23:34:21.627Z] [orchestration_api:stdout] [LLM] response received
+[2026-04-27T23:34:21.627Z] [orchestration_api:stdout] [LLM] response content length=66
+[2026-04-27T23:34:21.627Z] [orchestration_api:stdout] [LLM] raw content={
+[2026-04-27T23:34:21.627Z] [orchestration_api:stdout]   "kind": "clarification_needed",
+[2026-04-27T23:34:21.627Z] [orchestration_api:stdout]    "status": "not_a_command"
+[2026-04-27T23:34:21.627Z] [orchestration_api:stdout] }
+[2026-04-27T23:34:21.627Z] [orchestration_api:stdout] [LLM] parse success
+[2026-04-27T23:34:21.906Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:22.905Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:23.906Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:24.906Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:25.906Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:26.148Z] [orchestration_api:stdout] [STTClient] stopped (segments=4, chars=70)
+[2026-04-27T23:34:26.149Z] [orchestration_api:stdout] INFO:     127.0.0.1:50239 - "POST /mic/stop HTTP/1.1" 200 OK
+[2026-04-27T23:34:26.153Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:26.160Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/history?limit=100 HTTP/1.1" 200 OK
+[2026-04-27T23:34:27.165Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:28.169Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:29.168Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:30.169Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:31.168Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:32.168Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:33.168Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:34.166Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:35.435Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:36.434Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:37.435Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:38.434Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:39.435Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:40.434Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:41.385Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:42.166Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:43.435Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:44.436Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:45.166Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:46.169Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:47.166Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:48.167Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:49.170Z] [journal_api:stdout] INFO:     127.0.0.1:50192 - "GET /journal/sessions/d5172053-e62e-4091-973a-2c9ec6f4ae1b/latest HTTP/1.1" 200 OK
+[2026-04-27T23:34:49.472Z] [main] app:window-all-closed 
+[2026-04-27T23:34:52.424Z] [main] app:before-quit 
+[2026-04-27T23:34:52.425Z] [supervisor] stopAll:begin 
+[2026-04-27T23:34:52.457Z] [orchestration_api:stderr] INFO:     Shutting down
+[2026-04-27T23:34:52.457Z] [stt:stderr] INFO:     Shutting down
+[2026-04-27T23:34:52.469Z] [journal_api:stderr] INFO:     Shutting down
+[2026-04-27T23:34:52.557Z] [orchestration_api:stderr] INFO:     Waiting for application shutdown.
+[2026-04-27T23:34:52.562Z] [orchestration_api:stderr] INFO:     Application shutdown complete.
+[2026-04-27T23:34:52.562Z] [orchestration_api:stderr] INFO:     Finished server process [21545]
+[2026-04-27T23:34:52.563Z] [stt:stderr] INFO:     Waiting for application shutdown.
+[2026-04-27T23:34:52.563Z] [stt:stderr] INFO:stt.app:Shutting down...
+[2026-04-27T23:34:52.563Z] [stt:stderr] INFO:     Application shutdown complete.
+[2026-04-27T23:34:52.563Z] [stt:stderr] INFO:     Finished server process [21542]
+[2026-04-27T23:34:52.571Z] [journal_api:stderr] INFO:     Waiting for application shutdown.
+[2026-04-27T23:34:52.571Z] [journal_api:stderr] INFO:     Application shutdown complete.
+[2026-04-27T23:34:52.571Z] [journal_api:stderr] INFO:     Finished server process [21544]
+[2026-04-27T23:34:52.572Z] [supervisor] service:exit {"name":"orchestration_api","code":null}
+[2026-04-27T23:34:52.576Z] [supervisor] service:exit {"name":"journal_api","code":null}
+[2026-04-27T23:34:52.578Z] [supervisor] service:exit {"name":"stt","code":null}
+[2026-04-27T23:34:52.578Z] [supervisor] stopAll:done 

@@ -43,6 +43,8 @@ jobs:
 
       - name: Build Windows installer
         working-directory: desktop
+        env:
+          LABJ_PYTHON_BIN: python
         run: npm run dist:win
 
       - name: Upload Windows installer artifact

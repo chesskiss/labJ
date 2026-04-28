@@ -20,6 +20,20 @@ const bundledSitePackages = path.join(runtimeRoot, "site-packages");
 const bundledModelsDir = path.join(runtimeRoot, "models");
 const bundledTinyModelDir = path.join(bundledModelsDir, "faster-whisper-tiny");
 
+function getPreferredWindowsPythonFromEnv() {
+  if (process.platform !== "win32") {
+    return null;
+  }
+
+  const pythonLocation = process.env.pythonLocation;
+  if (!pythonLocation) {
+    return null;
+  }
+
+  const candidate = path.join(pythonLocation, "python.exe");
+  return existsSync(candidate) ? candidate : null;
+}
+
 function run(command, args, cwd = repoRoot, envOverrides = {}) {
   const result = spawnSync(command, args, {
     cwd,
@@ -46,7 +60,9 @@ function commandExists(command, args = ["--version"]) {
 function resolvePythonCommand() {
   const candidates = [
     process.env.LABJ_PYTHON_BIN,
-    process.platform === "win32" ? "py" : "python3",
+    getPreferredWindowsPythonFromEnv(),
+    process.platform === "win32" ? "python" : "python3",
+    process.platform === "win32" ? "py" : null,
     "python",
   ].filter(Boolean);
 
@@ -57,6 +73,39 @@ function resolvePythonCommand() {
   }
 
   return null;
+}
+
+function readPythonVersionParts(pythonCommand) {
+  const raw = readCommandOutput(pythonCommand, [
+    "-c",
+    "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')",
+  ]);
+  const [major, minor] = raw.split(".").map((part) => Number.parseInt(part, 10));
+  return { major, minor, raw };
+}
+
+function assertSupportedWindowsRuntimePython(pythonCommand) {
+  if (process.platform !== "win32") {
+    return;
+  }
+
+  const version = readPythonVersionParts(pythonCommand);
+  if (
+    !Number.isInteger(version.major) ||
+    !Number.isInteger(version.minor) ||
+    version.major !== 3 ||
+    version.minor < 10 ||
+    version.minor > 12
+  ) {
+    console.error(
+      `[prepare-runtime] Windows desktop packaging requires Python 3.10-3.12; resolved ${version.raw} from ${pythonCommand}.`,
+    );
+    process.exit(1);
+  }
+
+  console.log(
+    `[prepare-runtime] using Python ${version.raw} from ${pythonCommand} for Windows runtime packaging...`,
+  );
 }
 
 function readCommandOutput(command, args) {
@@ -140,6 +189,7 @@ if (commandExists(uvCommand)) {
       console.error("[prepare-runtime] Windows packaging requires Python 3.10+ on PATH.");
       process.exit(1);
     }
+    assertSupportedWindowsRuntimePython(pythonCommand);
     copyWindowsPythonHome(pythonCommand);
     installTargetedPackages(bundledPythonExe);
     bundleTinyWhisperModel(bundledPythonExe);
@@ -160,6 +210,7 @@ if (commandExists(uvCommand)) {
   }
 
   if (process.platform === "win32") {
+    assertSupportedWindowsRuntimePython(pythonCommand);
     copyWindowsPythonHome(pythonCommand);
     installTargetedPackages(bundledPythonExe);
     bundleTinyWhisperModel(bundledPythonExe);
