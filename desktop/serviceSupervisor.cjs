@@ -111,20 +111,89 @@ function resolveBundledPython(runtimeRoot) {
       ? path.join(runtimeRoot, "python", "python.exe")
       : path.join(runtimeRoot, "python", "bin", "python3");
   if (fs.existsSync(portablePythonPath)) {
+    const pythonHome = process.platform === "darwin"
+      ? resolveDarwinPythonHome(runtimeRoot)
+      : process.platform === "win32"
+        ? path.join(runtimeRoot, "python")
+        : null;
     return {
       command: portablePythonPath,
       useUv: false,
       bundled: true,
       pythonPathEntries: [runtimeRoot, path.join(runtimeRoot, "site-packages")],
+      pythonHome,
     };
   }
-  const pythonPath =
-    process.platform === "win32"
-      ? path.join(runtimeRoot, ".venv", "Scripts", "python.exe")
-      : path.join(runtimeRoot, ".venv", "bin", "python");
-  return fs.existsSync(pythonPath)
-    ? { command: pythonPath, useUv: false, bundled: true, pythonPathEntries: [] }
-    : null;
+  return null;
+}
+
+function resolveDarwinPythonHome(runtimeRoot) {
+  const currentVersionPath = path.join(
+    runtimeRoot,
+    "python",
+    "Python.framework",
+    "Versions",
+    "Current",
+  );
+  if (fs.existsSync(currentVersionPath)) {
+    return currentVersionPath;
+  }
+
+  const versionsDir = path.join(runtimeRoot, "python", "Python.framework", "Versions");
+  if (!fs.existsSync(versionsDir)) {
+    return null;
+  }
+
+  const versions = fs
+    .readdirSync(versionsDir, { withFileTypes: true })
+    .filter((entry) => entry.name !== "Current")
+    .map((entry) => entry.name)
+    .sort();
+
+  return versions.length ? path.join(versionsDir, versions[0]) : null;
+}
+
+function runBundledRuntimeSelfCheck({ command, sourceRoot, runtimeRoot, pythonPathEntries, pythonHome, log }) {
+  const packagedScriptPath = path.join(process.resourcesPath || "", "labj_runtime_tools", "runtime-self-check.py");
+  const selfCheckScript = fs.existsSync(packagedScriptPath)
+    ? packagedScriptPath
+    : path.join(__dirname, "scripts", "runtime-self-check.py");
+  const bundledModelPath = path.join(runtimeRoot, "models", "faster-whisper-tiny");
+  const mergedEnv = {
+    ...process.env,
+    PYTHONPATH: [sourceRoot, ...(pythonPathEntries || [])].join(path.delimiter),
+    ...(pythonHome ? { PYTHONHOME: pythonHome } : {}),
+  };
+  const result = spawnSync(
+    command,
+    [selfCheckScript, runtimeRoot, bundledModelPath],
+    {
+      cwd: sourceRoot,
+      env: mergedEnv,
+      shell: false,
+      encoding: "utf8",
+    }
+  );
+
+  if (log) {
+    log("runtime:self_check", {
+      status: result.status ?? null,
+      stdout: (result.stdout || "").trim(),
+      stderr: (result.stderr || "").trim(),
+      command,
+      runtimeRoot,
+      bundledModelPath,
+      pythonHome,
+    });
+  }
+
+  if (result.status !== 0) {
+    const stderr = (result.stderr || "").trim();
+    const stdout = (result.stdout || "").trim();
+    throw new Error(
+      `Bundled runtime self-check failed.${stderr ? ` stderr: ${stderr}` : ""}${stdout ? ` stdout: ${stdout}` : ""}`
+    );
+  }
 }
 
 class ServiceSupervisor {
@@ -210,6 +279,16 @@ class ServiceSupervisor {
     if (this.packaged && this.runner.bundled !== true) {
       this._log("startAll:error_missing_bundled_runtime", { runtimeRoot: this.runtimeRoot });
       throw new Error("Bundled runtime not found. Rebuild installer with `npm run prepare:runtime`.");
+    }
+    if (this.packaged) {
+      runBundledRuntimeSelfCheck({
+        command: this.runner.command,
+        sourceRoot: this.sourceRoot,
+        runtimeRoot: this.runtimeRoot,
+        pythonPathEntries: this.runner.pythonPathEntries,
+        pythonHome: this.runner.pythonHome,
+        log: this._log.bind(this),
+      });
     }
 
     fs.mkdirSync(this.logsDir, { recursive: true });
@@ -380,6 +459,9 @@ class ServiceSupervisor {
       mergedEnv.PYTHONPATH = this.sourceRoot;
     } else if (Array.isArray(this.runner.pythonPathEntries) && this.runner.pythonPathEntries.length) {
       mergedEnv.PYTHONPATH = [this.sourceRoot, ...this.runner.pythonPathEntries].join(path.delimiter);
+      if (this.runner.pythonHome) {
+        mergedEnv.PYTHONHOME = this.runner.pythonHome;
+      }
     }
 
     const child = spawn(this.runner.command, args, {

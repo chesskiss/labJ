@@ -35,6 +35,7 @@ desktop/node_modules/dmg-builder/vendor/mac_alias/alias.py
 desktop/node_modules/dmg-builder/vendor/mac_alias/bookmark.py
 desktop/node_modules/dmg-builder/vendor/mac_alias/osx.py
 desktop/node_modules/dmg-builder/vendor/mac_alias/utils.py
+desktop/scripts/runtime-self-check.py
 executor_runtime/__init__.py
 executor_runtime/enums.py
 executor_runtime/examples.py

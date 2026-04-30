@@ -6,6 +6,7 @@
   "scripts": {
     "build:ui": "node ./scripts/build-ui.mjs",
     "prepare:runtime": "node ./scripts/prepare-runtime.mjs",
+    "smoke:runtime": "node ./scripts/runtime-smoke.mjs",
     "start": "electron .",
     "dist:win": "npm run build:ui && npm run prepare:runtime && electron-builder --win --x64 --publish never",
     "dist:mac": "npm run build:ui && npm run prepare:runtime && electron-builder --mac --publish never",
@@ -29,10 +30,13 @@
     ],
     "extraResources": [
       {
+        "from": "scripts/runtime-self-check.py",
+        "to": "labj_runtime_tools/runtime-self-check.py"
+      },
+      {
         "from": "runtime",
         "to": "labj_runtime",
         "filter": [
-          ".venv/**",
           "python/**",
           "site-packages/**",
           "models/**"
